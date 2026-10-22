@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>쇼핑몰 이전 작업실 · 주문 이관 리허설과 패치 기록 (제안용 데모)</title>
+<meta name="description" content="옛 쇼핑몰 주문 DB를 퍼스트몰로 옮기기 전에 리허설하고, 퍼스트몰 정기 패치를 커스텀 코드와 충돌 없이 반영하는 과정을 보여 주는 제안용 데모예요. 쇼핑몰·주문·회원은 모두 가상 데이터예요.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232457F5'/%3E%3Cpath d='M9 12h11l-3-3M23 20H12l3 3' stroke='white' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style id="tokens">
+:root{
+  color-scheme: light;
+  --brand:#2457F5; --brand-hover:#1B45D6; --brand-press:#1638B0; --brand-text:#1B45D6;
+  --brand-tint:#EEF3FF; --brand-tint-2:#D9E4FF; --ring:0 0 0 3px rgba(36,87,245,.25); --on-brand:#FFFFFF;
+  --bg:#F2F4F6; --card:#FFFFFF; --soft:#F7F8FA; --track:#ECEFF3; --line:#E5E8EB; --line-2:#EBEEF2;
+  --ink:#191F28; --ink-2:#4E5968; --mut:#636D7B; --mut-2:#9AA3AE;
+  --ok:#127A4F; --ok-bg:#E3F6ED; --ok-dot:#1FA971;
+  --warn:#7A5600; --warn-bg:#FFF3D4; --warn-dot:#F2B01E;
+  --bad:#BF2930; --bad-bg:#FFE3E4; --bad-dot:#E5484D;
+  --info:#175CD3; --info-bg:#EAF2FF; --info-dot:#2E7CF6;
+  --neu:#4E5968; --neu-bg:#F0F2F5; --neu-dot:#8B95A1;
+  --font:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:20px; --r-xl:28px; --r-pill:999px;
+  --sh-pill:0 1px 2px rgba(16,24,40,.08);
+  --sh-pop:0 2px 6px rgba(16,24,40,.06),0 12px 32px rgba(16,24,40,.12);
+}
+</style>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:none;box-shadow:var(--ring);border-radius:var(--r-sm)}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:13px}
+.path{font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--ink)}
+.unit{font-size:13px;color:var(--mut);font-weight:500;margin-left:2px}
+.mut{color:var(--mut)}
+.tag-ex{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:6px;background:var(--neu-bg);color:var(--neu);font-size:12px;font-weight:600;vertical-align:1px;white-space:nowrap}
+
+/* 띠 */
+.band{background:var(--ink);color:#fff;font-size:13px;line-height:1.5;padding:8px 16px;text-align:center}
+.band b{font-weight:700;margin-right:6px}
+
+/* 머리 */
+.top{background:var(--card)}
+.top .in{max-width:1248px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;gap:24px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-size:17px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.brand span{font-size:13px;color:var(--mut);white-space:nowrap}
+.seg{margin-left:auto;display:flex;gap:4px;background:var(--track);padding:4px;border-radius:var(--r-pill)}
+.seg button{border:0;background:transparent;height:40px;padding:0 18px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--sh-pill)}
+.seg button:hover:not([aria-selected="true"]){color:var(--ink)}
+
+/* 본문 */
+.wrap{max-width:1248px;margin:0 auto;padding:40px 24px 96px}
+.head{display:flex;align-items:flex-end;gap:24px;margin-bottom:24px}
+.head h1{margin:0;font-size:32px;line-height:1.25;font-weight:700;letter-spacing:-.025em}
+.head p{margin:8px 0 0;color:var(--ink-2);max-width:640px}
+.head .meta{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.side{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
+
+.card{background:var(--card);border-radius:var(--r-lg);padding:28px;min-width:0}
+.card h2{margin:0;font-size:20px;line-height:1.3;font-weight:700;letter-spacing:-.015em}
+.card .sub{margin:4px 0 0;font-size:14px;color:var(--mut)}
+.ch{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
+.ch .act{margin-left:auto;display:flex;gap:8px;flex-shrink:0}
+.ch .tt{min-width:0}
+
+/* 단계 줄 */
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none}
+.steps a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:var(--r-pill);background:var(--card);color:var(--ink-2);font-size:14px;font-weight:600;text-decoration:none}
+.steps a .d{width:18px;height:18px;border-radius:50%;background:var(--track);display:grid;place-items:center}
+.steps a.done .d{background:var(--ok-dot)}
+.steps a.done .d svg{display:block}
+.steps a .d svg{display:none}
+.steps a.warn .d{background:var(--bad-dot)}
+.steps a.warn .d::after{content:"";width:2px;height:8px;background:#fff;border-radius:1px}
+
+/* 버튼 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border-radius:var(--r-pill);border:0;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s}
+.btn svg{flex-shrink:0}
+.btn-p{background:var(--brand);color:var(--on-brand)}
+.btn-p:hover{background:var(--brand-hover)}
+.btn-p:active{background:var(--brand-press)}
+.btn-s{background:var(--track);color:var(--ink)}
+.btn-s:hover{background:#E2E6EB}
+.btn-s:active{background:#D8DDE3}
+.btn-t{background:transparent;color:var(--brand-text);padding:0 12px}
+.btn-t:hover{background:var(--brand-tint)}
+.btn[disabled]{background:var(--track);color:var(--mut-2);cursor:not-allowed}
+.btn.loading{pointer-events:none}
+.btn.loading::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-w{width:100%;height:52px;font-size:16px;border-radius:var(--r-md)}
+
+/* 칩 */
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-pill);font-size:12px;font-weight:600;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.ok::before{background:var(--ok-dot)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.bad::before{background:var(--bad-dot)}
+.chip.warn{background:var(--warn-bg);color:var(--warn)} .chip.warn::before{background:var(--warn-dot)}
+.chip.info{background:var(--info-bg);color:var(--info)} .chip.info::before{background:var(--info-dot)}
+.chip.neu{background:var(--neu-bg);color:var(--neu)} .chip.neu::before{background:var(--neu-dot)}
+.chip.plain::before{display:none}
+
+/* 필터 칩 */
+.fchips{display:flex;gap:8px;flex-wrap:wrap}
+.fchip{height:36px;padding:0 14px;border-radius:var(--r-pill);border:0;background:var(--soft);color:var(--ink-2);font-size:13px;font-weight:600}
+.fchip b{font-weight:700;margin-left:4px;color:var(--ink)}
+.fchip[aria-pressed="true"]{background:var(--ink);color:#fff}
+.fchip[aria-pressed="true"] b{color:#fff}
+
+/* 표 */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+.tbl th{background:var(--soft);color:var(--mut);font-size:13px;font-weight:500;text-align:left;padding:10px 12px;white-space:nowrap}
+.tbl th:first-child{border-radius:10px 0 0 10px}
+.tbl th:last-child{border-radius:0 10px 10px 0}
+.tbl td{padding:16px 12px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .r{text-align:right}
+.tbl td.r{font-variant-numeric:tabular-nums}
+.tbl .w{white-space:nowrap}
+.tbl .s{font-size:13px;color:var(--mut)}
+.tbl .l1{display:block}
+.tbl .l2{display:block;font-size:13px;color:var(--mut);margin-top:2px}
+.tbl .l2 .chip{margin-top:2px}
+#prev-tbl{table-layout:fixed}
+#prev-tbl td{vertical-align:top}
+.arrow{color:var(--mut-2);margin:0 4px}
+
+/* 원본 */
+.raw{background:var(--soft);border-radius:var(--r-md);padding:12px 16px;overflow-x:auto;margin:0;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ink-2);white-space:pre;max-width:100%}
+.raw .hd{color:var(--ink);font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:8px 24px;margin:0 0 16px;padding:0;list-style:none;font-size:14px;color:var(--ink-2)}
+.facts b{color:var(--ink);font-weight:600;margin-left:6px;font-variant-numeric:tabular-nums}
+
+/* 토글 */
+.rules{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.rule{display:flex;align-items:center;gap:16px;padding:12px 16px;border-radius:var(--r-md);background:var(--soft)}
+.rule .tx{min-width:0;flex:1}
+.rule .tx b{display:block;font-size:15px;font-weight:600}
+.rule .tx span{font-size:13px;color:var(--mut)}
+.sw{position:relative;width:52px;height:44px;flex-shrink:0;display:grid;place-items:center}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.sw i{width:44px;height:26px;border-radius:13px;background:#D1D6DB;position:relative;transition:background .15s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+.sw input:checked + i{background:var(--brand)}
+.sw input:checked + i::after{transform:translateX(18px)}
+.sw input:focus-visible + i{box-shadow:var(--ring)}
+
+select.sel{height:40px;border-radius:var(--r-md);border:1px solid var(--line);background:var(--card);padding:0 32px 0 12px;font-size:14px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' stroke='%23636D7B' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;min-width:140px}
+select.sel:focus{outline:none;border-color:var(--brand);box-shadow:var(--ring)}
+select.sel.empty{border-color:var(--bad-dot);color:var(--bad)}
+
+.subh{font-size:15px;font-weight:700;margin:28px 0 10px}
+.subh .mut{font-weight:400;font-size:13px;margin-left:6px}
+.note{font-size:13px;color:var(--mut);margin:10px 0 0}
+
+/* 검증 */
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mt{background:var(--soft);border-radius:16px;padding:20px}
+.mt .lb{font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.mt .lb .chip{margin-left:auto}
+.mt .vv{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.3}
+.mt .cmp{font-size:13px;color:var(--mut);margin-top:4px;font-variant-numeric:tabular-nums}
+.small4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+.ms{border-radius:16px;padding:16px;background:var(--soft)}
+.ms .lb{font-size:13px;color:var(--ink-2)}
+.ms .vv{font-size:20px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.ms .cmp{font-size:12px;color:var(--mut);margin-top:2px}
+.ms.bad .vv{color:var(--bad)}
+
+/* 사이드 결과 */
+.res .lb{font-size:14px;color:var(--mut);font-weight:500}
+.res .vv{font-size:44px;line-height:1.2;font-weight:700;letter-spacing:-.03em;margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.res .vv.ok{color:var(--ok)}
+.res .vv.bad{color:var(--bad)}
+.res .why{font-size:14px;color:var(--ink-2);margin:0}
+.kv{list-style:none;margin:20px 0;padding:16px 0 0;border-top:1px solid var(--line-2);display:flex;flex-direction:column;gap:10px}
+.kv li{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.kv li span{color:var(--mut)}
+.kv li b{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.kv li b.bad{color:var(--bad)}
+.kv li b.ok{color:var(--ok)}
+.res .btns{display:flex;flex-direction:column;gap:8px}
+.res .btns .btn{width:100%}
+.dirty{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:var(--r-md);padding:10px 12px;margin:0 0 12px}
+
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hist li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line-2);font-size:14px}
+.hist li:first-child{border-top:0;padding-top:0}
+.hist .n{font-weight:700;width:36px}
+.hist .t{color:var(--mut);font-size:13px}
+.hist .chip{margin-left:auto}
+
+/* 보고서 */
+.rep{background:var(--soft);border-radius:16px;padding:20px 24px}
+.rep dl{margin:0;display:grid;grid-template-columns:120px 1fr;gap:10px 16px;font-size:14px}
+.rep dt{color:var(--mut)}
+.rep dd{margin:0;color:var(--ink)}
+.rep dd b{font-weight:600}
+.rep ul{margin:0;padding-left:18px}
+.rep li{margin:2px 0}
+.pv{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;margin-top:24px;align-items:start}
+.phone{background:var(--soft);border-radius:24px;padding:16px}
+.phone .bar{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 12px}
+.phone .bar b{font-size:16px}
+.po{background:var(--card);border-radius:16px;padding:16px;margin-top:8px}
+.po .r1{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--mut)}
+.po .r2{font-size:15px;font-weight:600;margin-top:4px}
+.po .r3{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.po .r3 b{font-variant-numeric:tabular-nums}
+.opt2{display:flex;flex-direction:column;gap:8px}
+.opt2 > div{background:var(--soft);border-radius:16px;padding:16px 20px}
+.opt2 b{font-size:15px;font-weight:700}
+.opt2 p{margin:4px 0 0;font-size:14px;color:var(--ink-2)}
+.empty{padding:32px 16px;text-align:center;color:var(--mut);font-size:14px}
+
+/* 패치 */
+.fgrp{border-radius:16px;background:var(--soft);padding:16px 20px;margin-top:12px}
+.fgrp > summary{list-style:none;display:flex;align-items:center;gap:12px;cursor:pointer;min-height:44px}
+.fgrp > summary::-webkit-details-marker{display:none}
+.fgrp > summary .t{font-size:15px;font-weight:700}
+.fgrp > summary .d{font-size:13px;color:var(--mut)}
+.fgrp > summary .n{margin-left:auto;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.fgrp > summary .cv{width:20px;height:20px;transition:transform .15s;color:var(--mut)}
+.fgrp[open] > summary .cv{transform:rotate(180deg)}
+.sub2{margin-top:8px}
+.sub2 > summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--brand-text);min-height:44px;display:flex;align-items:center;list-style:none}
+.sub2 > summary::-webkit-details-marker{display:none}
+.sub2[open] > summary{color:var(--ink-2)}
+.flist{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.flist li{background:var(--card);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center}
+.flist li .why{font-size:13px;color:var(--ink-2);grid-column:1/-1}
+.flist li .pt{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.mob-t{display:none}
+.mob-only{display:none}
+.pn{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;background:var(--track);font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.ck{width:44px;height:44px;display:grid;place-items:center;position:relative}
+.ck input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.ck i{width:22px;height:22px;border-radius:6px;border:1.5px solid #C4CAD1;background:#fff;display:grid;place-items:center;pointer-events:none}
+.ck input:checked + i{background:var(--brand);border-color:var(--brand)}
+.ck input:checked + i::after{content:"";width:10px;height:6px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.ck input:focus-visible + i{box-shadow:var(--ring)}
+tr.off td:not(:first-child){opacity:.45}
+.log{list-style:none;margin:16px 0 0;padding:16px 20px;background:var(--soft);border-radius:16px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.log li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px}
+.log li time{color:var(--mut);font-variant-numeric:tabular-nums;font-size:13px;padding-top:1px}
+.bk{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.bk div{background:var(--soft);border-radius:16px;padding:16px 20px}
+.bk .lb{font-size:13px;color:var(--mut)}
+.bk .path{display:block;margin-top:4px}
+.bk .sz{font-size:13px;color:var(--ink-2);margin-top:4px}
+.stbtn{border:0;height:36px;min-width:72px;padding:0 12px;border-radius:var(--r-pill);font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.stbtn::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.stbtn.none{background:var(--neu-bg);color:var(--neu)} .stbtn.none::before{background:var(--neu-dot)}
+.stbtn.ok{background:var(--ok-bg);color:var(--ok)} .stbtn.ok::before{background:var(--ok-dot)}
+.stbtn.bad{background:var(--bad-bg);color:var(--bad)} .stbtn.bad::before{background:var(--bad-dot)}
+.stbtn[disabled]{opacity:.5;cursor:not-allowed}
+.cknote{display:block;font-size:13px;color:var(--bad);margin-top:2px}
+.cknote.fixed{color:var(--ok)}
+.prog{list-style:none;margin:20px 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.prog li{display:flex;align-items:center;gap:12px;padding:8px 0;font-size:14px;color:var(--mut)}
+.prog li .d{width:22px;height:22px;border-radius:50%;background:var(--track);flex-shrink:0;display:grid;place-items:center}
+.prog li.done{color:var(--ink)}
+.prog li.done .d{background:var(--ok-dot)}
+.prog li.done .d::after{content:"";width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.prog li.now{color:var(--ink);font-weight:600}
+.prog li.now .d{background:var(--brand-tint-2)}
+.prog li.now .d::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand)}
+.rb{counter-reset:rb;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.rb li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:16px;padding:16px 20px;background:var(--soft);border-radius:16px;font-size:14px}
+.rb li b{font-weight:700}
+.rb li p{margin:0;color:var(--ink-2)}
+.rb code{font-family:var(--mono);font-size:12px;background:var(--card);padding:2px 6px;border-radius:6px;white-space:nowrap}
+.src{font-size:13px;color:var(--mut);margin:16px 0 0}
+.src a{color:var(--brand-text)}
+
+/* 토스트 */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r-md);font-size:14px;box-shadow:var(--sh-pop);z-index:50;max-width:calc(100% - 32px)}
+.mbar{display:none}
+
+@media (max-width:1100px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .side{position:static;order:-1}
+  .pv{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:720px){
+  body{font-size:15px}
+  .band{font-size:12px;padding:8px 16px;text-align:left}
+  .top .in{height:auto;flex-wrap:wrap;padding:12px 16px;gap:10px}
+  .brand{width:100%}
+  .seg{margin-left:0;width:100%}
+  .seg button{flex:1;padding:0 8px}
+  .wrap{padding:24px 16px calc(120px + env(safe-area-inset-bottom))}
+  .head{display:block;margin-bottom:16px}
+  .head h1{font-size:24px}
+  .head .meta{justify-content:flex-start;margin-top:12px}
+  .card{padding:20px}
+  .card h2{font-size:20px}
+  .ch{flex-wrap:wrap;margin-bottom:16px}
+  .ch .act{margin-left:0;width:100%}
+  .ch .act .btn{flex:1}
+  .steps{display:none}
+  .big2{grid-template-columns:1fr}
+  .small4{grid-template-columns:1fr 1fr}
+  .mt .vv{font-size:24px}
+  .res .vv{font-size:32px}
+  .mt .vv{font-size:24px}
+  .rep{padding:16px}
+  .rep dl{grid-template-columns:1fr;gap:2px}
+  .rep dd{margin-bottom:10px}
+  .bk{grid-template-columns:1fr}
+  .rb li{grid-template-columns:1fr;gap:4px}
+  .side .res .btns .btn-p{display:none}
+  .side .res .btns:not(:has(.btn-s)){display:none}
+  .tbl.cards .l1,.tbl.cards .l2{display:inline}
+  .tbl.cards td .l2{margin-left:6px}
+  #prev-tbl{table-layout:auto}
+  .tbl.cards td[data-l="주문자"],.tbl.cards td[data-l="상품"],.tbl.cards td[data-l="결과"]{flex-wrap:wrap;justify-content:flex-end}
+  /* 표 → 카드 */
+  .tbl.cards thead{display:none}
+  .tbl.cards, .tbl.cards tbody, .tbl.cards tr, .tbl.cards td{display:block;width:100%}
+  .tbl.cards tr{background:var(--soft);border-radius:16px;padding:12px 16px;margin-bottom:8px}
+  .tbl.cards tr.held{background:#FFF3F3}
+  .tbl.cards tr.held td{background:transparent}
+  .tbl.cards td{border:0;padding:3px 0;display:flex;justify-content:space-between;gap:12px;text-align:right}
+  .tbl.cards td::before{content:attr(data-l);color:var(--mut);font-size:13px;text-align:left;flex-shrink:0}
+  .tbl.cards td.r{text-align:right}
+  .tbl.cards td.full{display:block;text-align:left}
+  .tbl.cards td.full::before{display:none}
+  .tbl.cards td.lead{display:flex;justify-content:flex-start;text-align:left;font-weight:600;padding-bottom:6px}
+  .tbl.cards td.lead::before{display:none}
+  .tbl.cards td.hide-m{display:none}
+  .tbl.cards td.lead{gap:8px;align-items:center;flex-wrap:wrap}
+  .mob-t{display:block !important;font-weight:600;flex:1;min-width:0}
+  #pl-tbl td.lead{flex-wrap:nowrap;margin-left:-10px}
+  .side .prog{display:none}
+  .mob-only{display:inline}
+  #st-tbl.cards tr{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px}
+  #st-tbl.cards td[data-l="퍼스트몰 단계"]::before{display:none}
+  #st-tbl.cards td.full{grid-column:1/-1}
+  #map-tbl.cards td.full .mono{font-size:12px}
+  #pl-tbl.cards tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 14px 14px}
+  #pl-tbl.cards td{width:auto;padding:0;display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-2);text-align:left}
+  #pl-tbl.cards td::before{display:none}
+  #pl-tbl.cards td.hide-m{display:none}
+  #pl-tbl.cards td.lead{width:100%;font-size:15px;color:var(--ink);margin-left:-10px}
+  #pl-tbl.cards td[data-l="번호"]{margin-left:34px}
+  #pl-tbl.cards td[data-l="파일"]::before{display:inline;content:"파일";font-size:13px}
+  #pl-tbl.cards td[data-l="파일"] .s{display:inline !important;margin-left:4px}
+  #ck-tbl.cards tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+  #ck-tbl.cards td.lead{grid-column:1/-1;padding-bottom:2px}
+  #ck-tbl.cards td[data-l="구분"]{display:none}
+  #ck-tbl.cards td[data-l="시험 서버"],#ck-tbl.cards td[data-l="본 서버"]{background:var(--card);border-radius:12px;padding:4px 4px 4px 12px;align-items:center}
+  .mbar{display:block;position:fixed;left:0;right:0;bottom:0;background:var(--card);padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -1px 0 var(--line-2);z-index:40}
+  .mbar .hint{font-size:13px;color:var(--mut);margin:0 0 8px;text-align:center}
+  .toast{bottom:calc(112px + env(safe-area-inset-bottom))}
+}
+@media (pointer:coarse){ .fchip,.stbtn{min-height:44px} select.sel{height:44px} .seg button{height:44px} }
+@media print{
+  .band,.top,.steps,.side,.mbar,.toast,#tab-patch,.no-print{display:none !important}
+  body{background:#fff}
+  .wrap{padding:0}
+  .grid{display:block}
+  .card{padding:0 0 24px;break-inside:avoid}
+  #tab-mig .col > .card:not(#c-report){display:none}
+}
+</style>
+</head>
+<body>
+<div class="band" role="note"><b>제안용 데모 · 예시</b>쇼핑몰·주문·회원·서버는 모두 가상 데이터예요. 2탭의 패치 번호·제목·파일 경로만 퍼스트몰 공개 패치 리스트에서 가져왔어요.</div>
+
+<header class="top">
+  <div class="in">
+    <div class="brand"><b>쇼핑몰 이전 작업실</b><span>킴스몰 → 퍼스트몰 독립형</span></div>
+    <nav class="seg" role="tablist" aria-label="화면 고르기">
+      <button role="tab" id="t-mig" aria-controls="tab-mig" aria-selected="true" data-tab="mig">주문 이관 리허설</button>
+      <button role="tab" id="t-patch" aria-controls="tab-patch" aria-selected="false" data-tab="patch" tabindex="-1">패치 반영 기록</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+<!-- ============ 탭 1: 주문 이관 리허설 ============ -->
+<section id="tab-mig" role="tabpanel" aria-labelledby="t-mig">
+  <div class="head">
+    <div>
+      <h1>주문 DB 이관 리허설</h1>
+      <p>퍼스트몰 공식 이전에서 빠지는 옛 주문을 퍼스트몰 구조로 바꿔 보고, 건수와 금액이 원 단위까지 맞는지 확인해요. 실제 이전 전에 두 번 이상 돌려요.</p>
+    </div>
+  </div>
+
+  <ul class="steps" id="mig-steps" aria-label="진행 단계">
+    <li><a href="#c-src" data-k="src"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>옛 주문 파일</a></li>
+    <li><a href="#c-map" data-k="map"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>칸 맞추기</a></li>
+    <li><a href="#c-prev" data-k="prev"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>변환 미리보기</a></li>
+    <li><a href="#c-check" data-k="check"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>정합성 검증</a></li>
+    <li><a href="#c-report" data-k="report"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>리허설 보고서</a></li>
+  </ul>
+
+  <div class="grid">
+    <div class="col">
+      <!-- 옛 주문 파일 -->
+      <article class="card" id="c-src">
+        <div class="ch"><div class="tt"><h2>옛 주문 파일</h2><p class="sub">킴스몰 주문을 내려받은 CSV라고 가정했어요. 칸 이름은 예시예요(실제 구조는 DB를 받은 뒤 확인).</p></div></div>
+        <ul class="facts" id="src-facts"></ul>
+        <pre class="raw" id="src-raw" tabindex="0" aria-label="CSV 원본 앞부분"></pre>
+        <p class="note" id="src-note"></p>
+      </article>
+
+      <!-- 칸 맞추기 -->
+      <article class="card" id="c-map">
+        <div class="ch"><div class="tt"><h2>칸 맞추기</h2><p class="sub">옛 칸을 퍼스트몰 주문 항목에 하나씩 연결해요. DB 칸 이름은 공개 자료에 없어서 전부 예시예요.</p></div></div>
+        <table class="tbl cards" id="map-tbl">
+          <thead><tr><th>옛 칸</th><th>퍼스트몰 쪽 항목</th><th>DB 칸</th><th>바꾸는 방법</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <h3 class="subh">상태값 변환표 <span class="mut">퍼스트몰 주문 단계는 공식 구축 가이드 기준</span></h3>
+        <table class="tbl cards" id="st-tbl">
+          <thead><tr><th>옛 상태</th><th class="r">주문 수</th><th>퍼스트몰 단계</th><th>메모</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="note">주문접수 → 결제확인 → 상품준비 → 출고준비 → 출고완료 → 배송중 → 배송완료가 퍼스트몰 기본 단계예요. 공식 이전 서비스는 취소·반품·환불 주문을 옮기지 않아서, 기록 보존용으로 '취소', '반품·환불'로 따로 남겨요.</p>
+
+        <h3 class="subh">보완 규칙 <span class="mut">1차에서 걸린 주문을 어떻게 옮길지 정해요</span></h3>
+        <div class="rules" id="rules"></div>
+      </article>
+
+      <!-- 변환 미리보기 -->
+      <article class="card" id="c-prev">
+        <div class="ch">
+          <div class="tt"><h2>변환 미리보기</h2><p class="sub" id="prev-sub"></p></div>
+        </div>
+        <div class="fchips" id="prev-f" role="group" aria-label="주문 거르기" style="margin-bottom:16px"></div>
+        <table class="tbl cards" id="prev-tbl">
+          <colgroup><col style="width:16%"><col style="width:18%"><col style="width:21%"><col style="width:12%"><col style="width:13%"><col style="width:20%"></colgroup>
+          <thead><tr><th>옛 주문번호 · 주문일</th><th>주문자 · 회원</th><th>상품</th><th class="r">결제금액</th><th>퍼스트몰 단계</th><th>결과</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="empty" id="prev-empty" hidden>이 조건에 맞는 주문이 없어요. <button class="btn btn-t" data-pf="all" type="button">전체 보기</button></div>
+        <div style="text-align:center;margin-top:12px"><button class="btn btn-s" id="prev-more" type="button">10건 더 보기</button></div>
+      </article>
+
+      <!-- 검증 -->
+      <article class="card" id="c-check">
+        <div class="ch"><div class="tt"><h2>정합성 검증</h2><p class="sub" id="check-sub"></p></div></div>
+        <div class="big2" id="check-big"></div>
+        <div class="small4" id="check-small"></div>
+        <h3 class="subh">중복 줄 <span class="mut">완전히 같은 줄이 두 번 나온 경우</span></h3>
+        <table class="tbl cards" id="dup-tbl">
+          <thead><tr><th>옛 주문번호</th><th>상품</th><th class="r">수량</th><th class="r">금액</th><th>처리</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </article>
+
+      <!-- 보고서 -->
+      <article class="card" id="c-report">
+        <div class="ch">
+          <div class="tt"><h2>리허설 보고서</h2><p class="sub">클라이언트께 회차마다 이 내용과 대조표 파일을 드려요.</p></div>
+          <div class="act no-print">
+            <button class="btn btn-s" id="dl-csv" type="button"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M4.5 6.5L8 10l3.5-3.5M3 13h10"/></svg>대조표 CSV 받기</button>
+            <button class="btn btn-s" id="do-print" type="button">인쇄</button>
+          </div>
+        </div>
+        <div class="rep" id="rep"></div>
+        <div class="pv no-print">
+          <div>
+            <h3 class="subh" style="margin-top:0">조회 화면 확인</h3>
+            <p class="note" style="margin-top:0">옮긴 주문이 회원 마이페이지에서 어떻게 보이는지 회원을 골라 확인해요. 옛 주문번호를 그대로 보여 줘서 고객 문의 때 바로 찾을 수 있어요.</p>
+            <label for="pv-mem" class="note" style="display:block;margin-top:16px">회원 고르기</label>
+            <select class="sel" id="pv-mem" style="margin-top:6px;width:100%;max-width:320px"></select>
+            <h3 class="subh">조회 방식 두 가지 <span class="mut">데이터를 보고 미팅에서 정해요</span></h3>
+            <div class="opt2">
+              <div><b>퍼스트몰 주문 목록에 넣기</b><p>옛 주문을 퍼스트몰 주문 테이블에 '배송완료' 등으로 넣어요. 관리자 주문 목록과 마이페이지에 그대로 섞여 보여요. 공식 유상 이전과 같은 방식이고, 출고 기록이 없어 반품·환불은 손으로 처리해요.</p></div>
+              <div><b>따로 보관하고 조회 화면 만들기</b><p>옛 주문을 별도 보관 테이블에 넣고 마이페이지·관리자에 '지난 쇼핑몰 주문' 화면을 붙여요. 퍼스트몰 패치가 주문 테이블을 바꿔도 영향이 없어요. 오른쪽이 이 방식의 예시예요.</p></div>
+            </div>
+          </div>
+          <div class="phone" aria-live="polite">
+            <div class="bar"><b>지난 쇼핑몰 주문</b><span class="mut" style="font-size:13px" id="pv-cnt"></span></div>
+            <div id="pv-list"></div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="side" aria-label="리허설 실행과 기록">
+      <div class="card res" id="res"></div>
+      <div class="card">
+        <h2 style="font-size:17px;margin-bottom:12px">리허설 기록</h2>
+        <ul class="hist" id="hist"></ul>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 탭 2: 패치 반영 기록 ============ -->
+<section id="tab-patch" role="tabpanel" aria-labelledby="t-patch" hidden>
+  <div class="head">
+    <div>
+      <h1>패치 반영 기록</h1>
+      <p>커스텀한 독립형 쇼핑몰에 쌓인 공식 패치를 한 회차로 반영하는 순서예요. 덮어쓰기 전에 우리 파일과 겹치는 곳을 먼저 찾고, 시험 서버에서 결제까지 확인한 뒤 본 서버에 올려요.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="col">
+      <article class="card" id="p-list">
+        <div class="ch">
+          <div class="tt"><h2>이번 회차 패치</h2><p class="sub">독립 일반몰 공개 패치 리스트, 2026.08.13 ~ 10.14 (스킨 파일은 PC·모바일 기본 스킨만)</p></div>
+        </div>
+        <div class="fchips" id="pf" role="group" aria-label="영역 거르기" style="margin-bottom:16px"></div>
+        <table class="tbl cards" id="pl-tbl">
+          <thead><tr><th style="width:64px">포함</th><th>번호</th><th>날짜</th><th>제목</th><th>영역</th><th class="r">파일</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="src">출처: <a href="https://www.firstmall.kr/customer/patch" target="_blank" rel="noopener">퍼스트몰 패치리스트</a> · 2026-10-22에 확인 · 수정파일 내려받기와 소스설명보기는 로그인이 필요해요.</p>
+      </article>
+
+      <article class="card" id="p-conf">
+        <div class="ch"><div class="tt"><h2>겹치는 파일</h2><p class="sub">패치 파일 목록과 우리 커스텀 목록(git 기록)을 맞대 보고 나눠요. 커스텀 목록은 가상이에요.</p></div></div>
+        <div id="conf"></div>
+      </article>
+
+      <article class="card" id="p-bk">
+        <div class="ch">
+          <div class="tt"><h2>백업</h2><p class="sub">반영 전에 소스와 DB를 따로 받아 두고, git에 '반영 전' 표시를 남겨요.</p></div>
+          <div class="act"><button class="btn btn-s" type="button" data-act="backup">백업하기</button></div>
+        </div>
+        <div id="bk-out"><p class="note" style="margin:0">아직 백업하지 않았어요.</p></div>
+      </article>
+
+      <article class="card" id="p-test">
+        <div class="ch">
+          <div class="tt"><h2>시험 서버 반영</h2><p class="sub">본 서버를 복사한 시험 서버에 먼저 올려요. DB 패치는 오래된 것부터 차례로 돌려요.</p></div>
+          <div class="act"><button class="btn btn-s" type="button" data-act="test">시험 서버에 반영</button></div>
+        </div>
+        <div id="test-out"><p class="note" style="margin:0">백업을 마친 뒤에 할 수 있어요.</p></div>
+      </article>
+
+      <article class="card" id="p-check">
+        <div class="ch">
+          <div class="tt"><h2>주요 기능 점검표</h2><p class="sub">상태를 눌러 바꿀 수 있어요. 시험 서버가 모두 '통과'여야 본 서버에 올려요.</p></div>
+          <div class="act"><button class="btn btn-s" type="button" data-act="fillTest">시험 결과 채우기 (예시)</button></div>
+        </div>
+        <table class="tbl cards" id="ck-tbl">
+          <thead><tr><th>확인할 것</th><th>구분</th><th>시험 서버</th><th>본 서버</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </article>
+
+      <article class="card" id="p-live">
+        <div class="ch">
+          <div class="tt"><h2>본 서버 반영</h2><p class="sub">주문이 가장 적은 시간에 점검 화면을 켜고, 시험 서버와 같은 코드를 올려요.</p></div>
+          <div class="act"><button class="btn btn-s" type="button" data-act="live">본 서버에 반영</button></div>
+        </div>
+        <div id="live-out"><p class="note" style="margin:0">시험 서버 점검이 모두 통과해야 할 수 있어요.</p></div>
+      </article>
+
+      <article class="card" id="p-rb">
+        <div class="ch">
+          <div class="tt"><h2>되돌리기 방법</h2><p class="sub">본 서버 점검에서 주문·결제가 하나라도 안 되면 바로 이 순서로 되돌려요. 걸리는 시간은 예시예요.</p></div>
+          <div class="act"><button class="btn btn-s" type="button" data-act="rbtest">시험 서버에서 연습</button></div>
+        </div>
+        <ol class="rb">
+          <li><b>소스 · 약 10분</b><p>git에 남긴 반영 전 표시 <code>before-2026q4</code>로 되돌린 뒤, 이번에 바뀐 파일만 FTP로 다시 올려요. 백업 압축 파일도 함께 있어요.</p></li>
+          <li><b>DB · 약 15분</b><p>DB 패치가 있던 회차라 반영 전 덤프로 복원해요. 반영 뒤 들어온 주문이 있으면 먼저 따로 뽑아 두고, 복원한 다음 다시 넣어요.</p></li>
+          <li><b>확인</b><p>점검표를 본 서버 기준으로 다시 돌리고, 결제사 관리자 화면에서 시험 결제 취소까지 확인해요.</p></li>
+          <li><b>기록</b><p>무엇 때문에 되돌렸는지 남기고, 시험 서버에서 고친 뒤 날을 다시 잡아요.</p></li>
+        </ol>
+        <div id="rb-out"></div>
+      </article>
+    </div>
+
+    <aside class="side" aria-label="이번 회차 요약">
+      <div class="card res" id="pres"></div>
+    </aside>
+  </div>
+</section>
+</main>
+
+<div class="mbar" id="mbar"><p class="hint" id="mbar-hint"></p><button class="btn btn-p btn-w" id="mbar-btn" type="button"></button></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ---------- 공통 ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const won = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('ko-KR');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hm = d => String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+let toastT;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg>';
+
+/* ---------- 가상 데이터 만들기 ---------- */
+const R = mulberry32(20261022);
+const pick = a => a[Math.floor(R() * a.length)];
+const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+
+const PRODUCTS = [
+  ['P1001','린넨 베개커버 50×70','색상',['아이보리','차콜','세이지'],19000],
+  ['P1002','워싱 코튼 이불 Q','색상',['화이트','베이지'],89000],
+  ['P1003','워싱 코튼 이불 SS','색상',['화이트','베이지'],69000],
+  ['P1004','순면 매트리스 커버 Q','',[],39000],
+  ['P1005','세라믹 머그 2개 세트','색상',['오트','먹색'],24000],
+  ['P1006','원목 트레이 M','',[],32000],
+  ['P1007','규조토 발매트','크기',['S','L'],18000],
+  ['P1008','호텔식 수건 40수 5장','색상',['화이트','그레이'],29000],
+  ['P1009','면 거즈 잠옷 상하의','크기',['M','L'],49000],
+  ['P1010','스테인리스 밀폐용기 3종','',[],27000],
+  ['P1011','라탄 수납 바구니 L','',[],35000],
+  ['P1012','암막 커튼 140×230','색상',['그레이','베이지'],45000],
+  ['P1013','디퓨저 리필 200ml','향',['무화과','백차'],15000],
+  ['P1014','유리 물병 1L','',[],12000],
+  ['P1015','극세사 차렵이불 Q','색상',['크림','브라운'],79000],
+  ['P1016','메모리폼 베개','',[],39000],
+  ['P1017','면 행주 10장','',[],9000],
+  ['P1018','실리콘 냄비받침 2개','',[],8000],
+  ['P1019','면 러그 120×180','색상',['아이보리','올리브'],59000],
+  ['P1020','캔들 워머 램프','',[],38000]
+];
+const GONE = [ // 새 쇼핑몰로 옮기지 않은 단종 상품
+  ['P0907','극세사 무릎담요','',[],15000],
+  ['P0912','라탄 바구니 S','',[],19000],
+  ['P0915','도자기 접시 4P','',[],32000],
+  ['P0921','인견 여름 패드 Q','',[],42000]
+];
+const GOODS_LINK = {}; PRODUCTS.forEach((p, i) => GOODS_LINK[p[0]] = 101 + i);
+
+const SUR = '김이박최정강조윤장임한오서신권황안송류홍'.split('');
+const GIV = '수민영진현지은서준호희연우아원경'.split('');
+const IDS = ['sun','mint','jiwoo','hae','dal','bomi','ruru','yeon','seul','gaon','haru','dami','sori','nabi','byul','eunbi','dawn','ttal','moa','cheon'];
+const MEMBERS = []; const seenId = new Set();
+while (MEMBERS.length < 150){ const id = pick(IDS) + ri(10, 99); if (seenId.has(id)) continue; seenId.add(id); MEMBERS.push({ id, name: pick(SUR) + '*' + pick(GIV), tel: '010-****-' + String(ri(1000, 9999)) }); }
+const WITHDRAWN = new Set([MEMBERS[7].id, MEMBERS[41].id, MEMBERS[96].id]);
+const MEMBER_LINK = {}; MEMBERS.forEach((m, i) => { if (!WITHDRAWN.has(m.id)) MEMBER_LINK[m.id] = 10001 + i; });
+const activeMembers = MEMBERS.filter(m => !WITHDRAWN.has(m.id));
+
+const N = 241;
+const start = new Date(2019, 2, 4).getTime(), end = new Date(2026, 9, 19).getTime();
+const dates = Array.from({length: N}, () => new Date(start + R() * (end - start))).sort((a, b) => a - b);
+dates.forEach(d => d.setHours(ri(8, 23), ri(0, 59), 0, 0));
+const METHODS = [['신용카드',50],['무통장입금',20],['네이버페이',15],['실시간계좌이체',8],['카카오페이',7]];
+function wpick(list){ let x = R() * 100; for (const [v, w] of list){ if ((x -= w) < 0) return v; } return list[0][0]; }
+
+const IDX = { withdrawn:[12,57,58,140], gone:[20,33,61,88,102], wait:[45,110,190], exch:[75,160], dup:[130,205] };
+const daySeq = {};
+const ORDERS = dates.map((d, i) => {
+  const ymd = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+  daySeq[ymd] = (daySeq[ymd] || 0) + 1;
+  const no = ymd + '-' + String(ri(10, 60) + daySeq[ymd]).padStart(4, '0');
+  let mem = R() < 0.82 ? pick(activeMembers) : null;
+  if (IDX.withdrawn.includes(i)) mem = MEMBERS.find(m => m.id === [...WITHDRAWN][IDX.withdrawn.indexOf(i) === 3 ? 2 : Math.min(IDX.withdrawn.indexOf(i), 2)]);
+  const buyer = mem ? mem.name : pick(SUR) + '*' + pick(GIV);
+  const nItems = R() < 0.65 ? 1 : (R() < 0.72 ? 2 : 3);
+  const pool = [...PRODUCTS]; const lines = [];
+  for (let k = 0; k < nItems; k++){
+    const p = pool.splice(Math.floor(R() * pool.length), 1)[0];
+    const opt = p[2] ? p[2] + ':' + pick(p[3]) : '';
+    const qty = R() < 0.8 ? 1 : (R() < 0.85 ? 2 : 3);
+    lines.push({ code: p[0], name: p[1], opt, qty, price: p[4] });
+  }
+  if (IDX.gone.includes(i)){ const g = GONE[IDX.gone.indexOf(i) % GONE.length]; lines[0] = { code: g[0], name: g[1], opt: '', qty: 1, price: g[4] }; }
+  const sub = lines.reduce((s, l) => s + l.price * l.qty, 0);
+  const ship = sub >= 50000 ? 0 : 3000;
+  const disc = R() < 0.2 ? Math.min(pick([1000,2000,3000,5000]), Math.floor(sub * 0.2 / 1000) * 1000) : 0;
+  const pt = R() < 0.15 ? pick([500,1000,2000,3000]) : 0;
+  const pay = sub + ship - disc - pt;
+  const method = wpick(METHODS);
+  let status = '배송완료'; const r = R();
+  if (r < 0.07) status = '주문취소'; else if (r < 0.10) status = '반품완료';
+  if (i >= N - 6) status = ['입금확인','배송준비','배송준비','배송중','배송중','입금확인'][i - (N - 6)];
+  if (IDX.wait.includes(i)) status = '입금대기';
+  if (IDX.exch.includes(i)) status = '교환완료';
+  if (IDX.withdrawn.includes(i) || IDX.gone.includes(i) || IDX.dup.includes(i)) { if (!['배송완료'].includes(status)) status = '배송완료'; }
+  const inv = ['배송완료','배송중','반품완료','교환완료'].includes(status) ? '6' + String(ri(1000000000, 9999999999)) : '';
+  const dt = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${hm(d)}`;
+  return { i, no, dt, d, mid: mem ? mem.id : '', buyer, lines, ship, disc, pt, pay, method, status, inv };
+});
+// CSV 줄 (중복 줄 2개 섞기)
+const HEAD = ['주문번호','주문일시','회원아이디','주문자','상품코드','상품명','옵션','수량','단가','배송비','할인','적립금사용','결제금액','결제수단','주문상태','송장번호'];
+const ROWS = [];
+ORDERS.forEach(o => o.lines.forEach((l, k) => {
+  const cells = [o.no, o.dt, o.mid, o.buyer, l.code, l.name, l.opt, l.qty, l.price, o.ship, o.disc, o.pt, o.pay, o.method, o.status, o.inv];
+  const row = { no: o.no, line: l, raw: cells.join(',') };
+  ROWS.push(row);
+  if (IDX.dup.includes(o.i) && k === 0) ROWS.push({ no: o.no, line: l, raw: row.raw, dup: true });
+}));
+const ORDER_BY_NO = Object.fromEntries(ORDERS.map(o => [o.no, o]));
+
+/* ---------- 리허설 설정 ---------- */
+const FM_STEPS = ['주문접수','결제확인','상품준비','출고준비','출고완료','배송중','배송완료','취소','반품·환불'];
+const OLD_STATUSES = ['배송완료','배송중','배송준비','입금확인','주문취소','반품완료','교환완료','입금대기'];
+const DEFAULT_MAP = { '배송완료':'배송완료', '배송중':'배송중', '배송준비':'상품준비', '입금확인':'결제확인', '주문취소':'취소', '반품완료':'반품·환불', '교환완료':'', '입금대기':'' };
+const REC_MAP = { '교환완료':'배송완료', '입금대기':'취소' };
+const ST_MEMO = { '배송완료':'대부분의 옛 주문', '배송중':'전환 직전 주문, 송장번호 보존', '배송준비':'전환 직전 주문', '입금확인':'전환 직전 주문', '주문취소':'공식 이전은 안 옮김, 기록 보존', '반품완료':'공식 이전은 안 옮김, 기록 보존', '교환완료':'퍼스트몰에 같은 단계 없음', '입금대기':'몇 년 지난 미입금 주문' };
+const cfg = { map: { ...DEFAULT_MAP }, wd: false, gone: false, dedupe: false };
+let runs = []; let last = null; let dirty = false;
+let prevFilter = 'focus'; let prevLimit = 10;
+
+function rehearse(){
+  const seen = new Set(); const dupRows = []; const lines = [];
+  ROWS.forEach(r => { if (seen.has(r.raw)){ dupRows.push(r); if (!cfg.dedupe) lines.push(r); } else { seen.add(r.raw); lines.push(r); } });
+  const groups = new Map(); lines.forEach(r => { if (!groups.has(r.no)) groups.set(r.no, []); groups.get(r.no).push(r.line); });
+  let fmSeq = 0;
+  const res = ORDERS.map(o => {
+    const ls = groups.get(o.no); const issues = []; const applied = [];
+    let mem = { kind: 'guest' };
+    if (o.mid){
+      if (MEMBER_LINK[o.mid]) mem = { kind: 'linked', no: MEMBER_LINK[o.mid] };
+      else if (cfg.wd){ mem = { kind: 'wd' }; applied.push('탈퇴 회원 → 비회원 주문'); }
+      else { mem = { kind: 'fail' }; issues.push('회원 연결 실패'); }
+    }
+    let goneLines = 0;
+    ls.forEach(l => { if (!GOODS_LINK[l.code]){ goneLines++; } });
+    if (goneLines){ if (cfg.gone) applied.push('단종 상품 글자로 보존'); else issues.push('상품 연결 실패'); }
+    const step = cfg.map[o.status];
+    if (!step) issues.push(`'${o.status}' 단계 없음`);
+    const hasDup = dupRows.some(r => r.no === o.no);
+    if (hasDup && cfg.dedupe) applied.push('중복 줄 1개 뺌');
+    const itemSum = ls.reduce((s, l) => s + l.price * l.qty, 0);
+    const calc = itemSum + o.ship - o.disc - o.pt;
+    const held = issues.length > 0;
+    return { o, ls, mem, goneLines, step, issues, applied, held, calc, diff: held ? null : calc - o.pay, fm: held ? null : 'FM-' + String(++fmSeq).padStart(6, '0') };
+  });
+  const moved = res.filter(r => !r.held);
+  const srcSum = ORDERS.reduce((s, o) => s + o.pay, 0);
+  const movedSum = moved.reduce((s, r) => s + r.calc, 0);
+  const heldSum = res.filter(r => r.held).reduce((s, r) => s + r.o.pay, 0);
+  const memberOrders = ORDERS.filter(o => o.mid).length;
+  const memFail = res.filter(r => r.mem.kind === 'fail').length;
+  const memWd = res.filter(r => r.mem.kind === 'wd').length;
+  const goodsFail = res.filter(r => r.goneLines && !cfg.gone).reduce((s, r) => s + r.goneLines, 0);
+  const goodsKeep = res.filter(r => r.goneLines && cfg.gone).reduce((s, r) => s + r.goneLines, 0);
+  const totalLines = ROWS.length - dupRows.length;
+  const stCount = {}; ORDERS.forEach(o => stCount[o.status] = (stCount[o.status] || 0) + 1);
+  const stFail = res.filter(r => !r.step).length;
+  const amtDiffOrders = moved.filter(r => r.diff !== 0).length;
+  const out = {
+    n: runs.length + 1, at: new Date(), cfg: JSON.parse(JSON.stringify(cfg)), res, dupRows,
+    srcOrders: ORDERS.length, movedOrders: moved.length, held: res.filter(r => r.held).length,
+    srcSum, movedSum, heldSum, sumDiff: movedSum - (srcSum - heldSum), memberOrders, memFail, memWd,
+    goodsFail, goodsKeep, totalLines, stCount, stFail, amtDiffOrders, dup: dupRows.length
+  };
+  out.pass = out.held === 0 && out.movedOrders === out.srcOrders && out.movedSum === out.srcSum && (cfg.dedupe || out.dup === 0);
+  return out;
+}
+
+/* ---------- 탭 1 그리기 ---------- */
+function drawSrc(){
+  const first = ORDERS[0].dt.slice(0, 10), lastD = ORDERS[ORDERS.length - 1].dt.slice(0, 10);
+  $('#src-facts').innerHTML = `<li>파일<b class="mono" style="font-weight:500">kims_order_export.csv</b></li><li>줄<b>${ROWS.length.toLocaleString()}</b></li><li>주문<b>${ORDERS.length.toLocaleString()}건</b></li><li>기간<b>${first} ~ ${lastD}</b></li><li>회원 주문<b>${ORDERS.filter(o=>o.mid).length}건</b></li>`;
+  const show = ROWS.slice(0, 7).map(r => esc(r.raw)).join('\n');
+  $('#src-raw').innerHTML = `<span class="hd">${HEAD.join(',')}</span>\n${show}\n<span style="color:var(--mut)">… ${ROWS.length - 7}줄 더</span>`;
+  $('#src-note').textContent = '한 주문에 상품이 여러 개면 줄이 여러 개예요. 배송비·할인·결제금액은 주문마다 같은 값이 줄마다 반복돼요.';
+}
+const MAP_ROWS = [
+  ['주문번호','옛 주문번호 (보존)','old_order_no','지우지 않고 그대로 저장, 퍼스트몰 번호는 새로 발급'],
+  ['주문일시','주문일','regist_date','2019.03.04 14:22 → 2019-03-04 14:22:00'],
+  ['회원아이디','회원','member_seq','회원 연결표로 새 회원번호 찾기 (공식 이전이 끝난 회원 기준)'],
+  ['주문자','주문자 이름','order_user_name','그대로'],
+  ['상품코드','상품','goods_seq','상품 연결표로 새 상품번호 찾기'],
+  ['상품명 · 옵션','주문 당시 상품명 · 옵션','goods_name · option1','글자 그대로 보존 (상품이 바뀌어도 당시 내용 유지)'],
+  ['수량 · 단가','수량 · 판매가','ea · price','숫자로, 원 단위'],
+  ['배송비 · 할인 · 적립금사용','배송비 · 할인 · 적립금 사용','shipping_cost · …','주문당 한 번만 (줄마다 반복된 값)'],
+  ['결제금액','결제금액','settleprice','원본 값 저장 + 상품 줄로 다시 계산해 대조'],
+  ['결제수단','결제수단','payment','신용카드·무통장·계좌이체·네이버페이·카카오페이 표로 바꾸기'],
+  ['주문상태','주문 단계','step','아래 상태값 변환표'],
+  ['송장번호','송장번호 (보관)','old_invoice','출고 기록은 새로 만들지 않고 보관 칸에']
+];
+function drawMap(){
+  $('#map-tbl tbody').innerHTML = MAP_ROWS.map(r => `<tr><td class="lead" data-l="옛 칸"><span>${r[0]}<span class="mob-only"><span class="arrow">→</span>${r[1]}</span></span></td><td class="hide-m" data-l="퍼스트몰">${r[1]}</td><td class="full" data-l="DB 칸"><span class="mob-only mut">DB </span><span class="mono">${r[2]}</span> <span class="tag-ex">예시</span></td><td class="s full" data-l="방법">${r[3]}</td></tr>`).join('');
+  const cnt = {}; ORDERS.forEach(o => cnt[o.status] = (cnt[o.status] || 0) + 1);
+  $('#st-tbl tbody').innerHTML = OLD_STATUSES.filter(s => cnt[s]).map(s => {
+    const v = cfg.map[s] || '';
+    return `<tr><td class="lead" data-l="옛 상태"><span>${s}<span class="mob-only mut" style="font-weight:400"> · ${cnt[s]}건</span></span></td><td class="r hide-m" data-l="주문 수">${cnt[s]}건</td><td data-l="퍼스트몰 단계"><select class="sel ${v ? '' : 'empty'}" data-st="${s}" aria-label="${s}을 바꿀 퍼스트몰 단계"><option value="">고르세요</option>${FM_STEPS.map(f => `<option ${f === v ? 'selected' : ''}>${f}</option>`).join('')}</select></td><td class="s full" data-l="메모">${ST_MEMO[s] || ''}</td></tr>`;
+  }).join('');
+  const wdOrders = ORDERS.filter(o => o.mid && !MEMBER_LINK[o.mid]).length;
+  const goneOrders = ORDERS.filter(o => o.lines.some(l => !GOODS_LINK[l.code])).length;
+  const dupN = ROWS.filter(r => r.dup).length;
+  const rules = [
+    ['wd','탈퇴 회원의 주문', `회원 연결 없이 비회원 주문으로 옮기고 주문자 이름은 남겨요 · ${wdOrders}건`],
+    ['gone','단종 상품이 든 주문', `상품 연결 없이 주문 당시 상품명·가격을 글자로 보존해요 · ${goneOrders}건`],
+    ['dedupe','완전히 같은 줄', `하나만 남기고 뺀 줄은 보고서에 적어요 · ${dupN}줄`]
+  ];
+  $('#rules').innerHTML = rules.map(r => `<label class="rule"><span class="tx"><b>${r[1]}</b><span>${r[2]}</span></span><span class="sw"><input type="checkbox" data-rule="${r[0]}" ${cfg[r[0]] ? 'checked' : ''}><i></i></span></label>`).join('');
+}
+function drawRes(){
+  const L = last;
+  const big = L.pass ? '통과' : `보류 ${L.held}건`;
+  const why = L.pass ? '주문 수와 결제금액 합계가 원본과 원 단위까지 같아요.' : (L.held ? '아래 규칙을 정하고 다시 돌리면 돼요.' : '금액 차이가 남아 있어요. 중복 줄을 확인해요.');
+  const sumD = L.movedSum - L.srcSum;
+  $('#res').innerHTML = `
+    ${dirty ? '<p class="dirty">규칙을 바꿨어요. 다시 실행하면 반영돼요.</p>' : ''}
+    <div class="lb">리허설 ${L.n}차 결과</div>
+    <div class="vv ${L.pass ? 'ok' : 'bad'}">${big}</div>
+    <p class="why">${why}</p>
+    <ul class="kv">
+      <li><span>주문 수</span><b class="${L.movedOrders === L.srcOrders ? 'ok' : 'bad'}">${L.movedOrders} / ${L.srcOrders}건</b></li>
+      <li><span>결제금액 차이</span><b class="${sumD === 0 ? 'ok' : 'bad'}">${sumD === 0 ? '0원' : won(sumD) + '원'}</b></li>
+      <li><span>회원 연결 실패</span><b class="${L.memFail ? 'bad' : ''}">${L.memFail}건</b></li>
+      <li><span>상품 연결 실패</span><b class="${L.goodsFail ? 'bad' : ''}">${L.goodsFail}줄</b></li>
+      <li><span>단계 못 정한 주문</span><b class="${L.stFail ? 'bad' : ''}">${L.stFail}건</b></li>
+      <li><span>중복 줄</span><b class="${L.dup && !L.cfg.dedupe ? 'bad' : ''}">${L.dup}줄${L.cfg.dedupe ? ' (뺌)' : ''}</b></li>
+    </ul>
+    <div class="btns">
+      <button class="btn btn-p" type="button" data-run>리허설 ${runs.length + 1}차 실행</button>
+      ${!L.pass && !allRecOn() ? '<button class="btn btn-s" type="button" data-rec>추천 규칙 모두 켜기</button>' : ''}
+    </div>`;
+  $('#hist').innerHTML = runs.slice().reverse().map(r => `<li><span class="n">${r.n}차</span><span class="t">${hm(r.at)} · 옮김 ${r.movedOrders}건</span>${r.pass ? '<span class="chip ok">통과</span>' : `<span class="chip bad">보류 ${r.held}</span>`}</li>`).join('') + (runs.length < 3 ? `<li><span class="n mut">${runs.length < 2 ? '2차' : '3차'}</span><span class="t">${runs.length < 2 ? '규칙 정한 뒤' : '최종 이전 직전 복사본으로'}</span><span class="chip neu">예정</span></li>` : '');
+  updateMbar();
+}
+function allRecOn(){ return cfg.wd && cfg.gone && cfg.dedupe && Object.keys(REC_MAP).every(k => cfg.map[k]); }
+function memLabel(r){
+  const n = `<span class="l1">${esc(r.o.buyer)}</span>`;
+  if (r.mem.kind === 'linked') return n + `<span class="l2"><span class="mono">${r.o.mid}</span><span class="arrow">→</span>회원 ${r.mem.no}</span>`;
+  if (r.mem.kind === 'wd') return n + `<span class="l2">탈퇴 회원<span class="arrow">→</span>비회원 주문</span>`;
+  if (r.mem.kind === 'fail') return n + `<span class="l2"><span class="mono">${r.o.mid}</span> <span class="chip bad">연결 실패</span></span>`;
+  return n + '<span class="l2">비회원</span>';
+}
+function prodLabel(r){
+  const l = r.ls[0]; const more = r.ls.length > 1 ? ` 외 ${r.ls.length - 1}개` : '';
+  const gone = !GOODS_LINK[l.code];
+  return `<span class="l1">${esc(l.name)}<span class="mut">${more}</span></span>${gone ? '<span class="l2"><span class="chip ' + (last.cfg.gone ? 'info' : 'bad') + '">' + (last.cfg.gone ? '단종 · 글자 보존' : '상품 연결 실패') + '</span></span>' : ''}`;
+}
+function resultChip(r){
+  if (r.held) return `<span class="chip bad">보류</span><span class="l2">${r.issues.join(', ')}</span>`;
+  if (r.applied.length) return `<span class="chip info">규칙 적용</span><span class="l2">${r.fm} · ${r.applied.join(', ')}</span>`;
+  return `<span class="chip ok">옮김</span><span class="l2 mono" style="font-size:12px">${r.fm}</span>`;
+}
+function drawPrev(){
+  const L = last;
+  const focus = L.res.filter(r => r.held || r.applied.length);
+  const sets = { focus, held: L.res.filter(r => r.held), all: L.res.slice().reverse() };
+  if (prevFilter === 'focus' && !focus.length) prevFilter = 'all';
+  $('#prev-sub').textContent = `퍼스트몰 번호(FM-…)는 형식만 예시예요. 옛 주문번호는 그대로 남아요.`;
+  $('#prev-f').innerHTML = [['focus','확인할 주문',focus.length],['held','보류',sets.held.length],['all','전체',L.res.length]].map(f => `<button class="fchip" type="button" data-pf="${f[0]}" aria-pressed="${prevFilter === f[0]}">${f[1]}<b>${f[2]}</b></button>`).join('');
+  const list = sets[prevFilter];
+  const shown = list.slice(0, prevLimit);
+  $('#prev-tbl tbody').innerHTML = shown.map(r => `<tr class="${r.held ? 'held' : ''}">
+    <td class="lead" data-l="옛 주문번호"><span class="l1 mono">${r.o.no}</span><span class="l2 num">${r.o.dt.slice(0, 10)}</span></td>
+    <td data-l="주문자">${memLabel(r)}</td>
+    <td data-l="상품">${prodLabel(r)}</td>
+    <td class="r w" data-l="결제금액">${won(r.o.pay)}<span class="unit">원</span>${r.diff ? `<span class="l2" style="color:var(--bad)">상품 줄 합 ${won(r.calc)}원</span>` : ''}</td>
+    <td data-l="단계"><span class="l1">${r.step ? r.step : '<span class="chip bad">없음</span>'}</span><span class="l2">옛 ${r.o.status}</span></td>
+    <td data-l="결과">${resultChip(r)}</td></tr>`).join('');
+  $('#prev-empty').hidden = list.length > 0;
+  $('#prev-tbl').hidden = list.length === 0;
+  $('#prev-more').hidden = list.length <= prevLimit;
+}
+function drawCheck(){
+  const L = last;
+  const sumD = L.movedSum - L.srcSum;
+  $('#check-sub').textContent = `리허설 ${L.n}차 · ${hm(L.at)} · 원본 ${ROWS.length}줄, 주문 ${L.srcOrders}건 기준`;
+  const okC = '<span class="chip ok">맞음</span>', badC = t => `<span class="chip bad">${t}</span>`;
+  $('#check-big').innerHTML = `
+    <div class="mt"><div class="lb">주문 수 ${L.movedOrders === L.srcOrders ? okC : badC('다름')}</div><div class="vv">${L.movedOrders}<span class="unit">건</span> <span class="mut" style="font-size:16px;font-weight:500">/ 원본 ${L.srcOrders}건</span></div><div class="cmp">${L.held ? `보류 ${L.held}건은 아직 안 옮겼어요` : '빠진 주문 없음'}</div></div>
+    <div class="mt"><div class="lb">결제금액 합계 ${sumD === 0 ? okC : badC((sumD > 0 ? '+' : '') + won(sumD) + '원')}</div><div class="vv">${won(L.movedSum)}<span class="unit">원</span></div><div class="cmp">원본 ${won(L.srcSum)}원${L.held ? ` · 보류분 ${won(L.heldSum)}원 빼고 비교해도 ${L.sumDiff === 0 ? '같음' : (L.sumDiff > 0 ? '+' : '') + won(L.sumDiff) + '원 (중복 줄)'}` : ''}</div></div>`;
+  const tiles = [
+    ['회원 연결 실패', L.memFail + '건', L.memWd ? `탈퇴 ${L.memWd}건 비회원으로` : `회원 주문 ${L.memberOrders}건 중`, L.memFail > 0],
+    ['상품 연결 실패', L.goodsFail + '줄', L.goodsKeep ? `단종 ${L.goodsKeep}줄 글자 보존` : `상품 줄 ${L.totalLines}개 중`, L.goodsFail > 0],
+    ['단계 못 정함', L.stFail + '건', `옛 상태 ${Object.keys(L.stCount).length}종류`, L.stFail > 0],
+    ['중복 줄', L.dup + '줄', L.cfg.dedupe ? '하나만 남김' : '그대로 옮기면 금액이 늘어요', L.dup > 0 && !L.cfg.dedupe]
+  ];
+  $('#check-small').innerHTML = tiles.map(t => `<div class="ms ${t[3] ? 'bad' : ''}"><div class="lb">${t[0]}</div><div class="vv">${t[1]}</div><div class="cmp">${t[2]}</div></div>`).join('');
+  $('#dup-tbl tbody').innerHTML = L.dupRows.map(r => `<tr><td class="lead" data-l="옛 주문번호"><span class="mono">${r.no}</span></td><td data-l="상품">${esc(r.line.name)}</td><td class="r" data-l="수량">${r.line.qty}</td><td class="r" data-l="금액">${won(r.line.price * r.line.qty)}<span class="unit">원</span></td><td data-l="처리">${L.cfg.dedupe ? '<span class="chip ok">뺌</span>' : '<span class="chip bad">두 번 들어감</span>'}</td></tr>`).join('');
+}
+function drawReport(){
+  const L = last;
+  const first = ORDERS[0].dt.slice(0, 10), lastD = ORDERS[ORDERS.length - 1].dt.slice(0, 10);
+  const applied = [];
+  if (L.cfg.wd && L.memWd) applied.push(`탈퇴 회원 주문 ${L.memWd}건 → 비회원 주문 (이름 보존)`);
+  if (L.cfg.gone && L.goodsKeep) applied.push(`단종 상품 ${L.goodsKeep}줄 → 상품 연결 없이 글자 보존`);
+  if (L.cfg.dedupe && L.dup) applied.push(`중복 줄 ${L.dup}개 뺌`);
+  Object.keys(REC_MAP).forEach(k => { if (L.cfg.map[k]) applied.push(`'${k}' ${L.stCount[k]}건 → ${L.cfg.map[k]}`); });
+  const todo = [];
+  if (L.memFail) todo.push(`회원 연결 실패 ${L.memFail}건: 탈퇴 회원인지 클라이언트와 확인`);
+  if (L.goodsFail) todo.push(`상품 연결 실패 ${L.goodsFail}줄: 단종 상품 처리 방법 결정`);
+  if (L.stFail) todo.push(`단계 못 정한 주문 ${L.stFail}건: 변환표 채우기`);
+  if (L.dup && !L.cfg.dedupe) todo.push(`중복 줄 ${L.dup}개: 원본 내보내기 오류인지 확인`);
+  $('#rep').innerHTML = `<dl>
+    <dt>회차</dt><dd><b>리허설 ${L.n}차</b> · ${L.at.getMonth() + 1}월 ${L.at.getDate()}일 ${hm(L.at)} · ${L.pass ? '<span class="chip ok">통과</span>' : '<span class="chip bad">보류 있음</span>'}</dd>
+    <dt>원본</dt><dd>${ROWS.length}줄 · 주문 ${L.srcOrders}건 · ${first} ~ ${lastD}</dd>
+    <dt>결과</dt><dd>옮김 ${L.movedOrders}건 · 보류 ${L.held}건 · 결제금액 합계 원본 ${won(L.srcSum)}원 / 옮김 ${won(L.movedSum)}원 (차이 ${won(L.movedSum - L.srcSum)}원)</dd>
+    <dt>적용한 규칙</dt><dd>${applied.length ? '<ul>' + applied.map(a => `<li>${a}</li>`).join('') + '</ul>' : '없음 (원본 그대로)'}</dd>
+    <dt>남은 일</dt><dd>${todo.length ? '<ul>' + todo.map(a => `<li>${a}</li>`).join('') + '</ul>' : '<ul><li>최종 이전(회원 다시 넣기)이 끝난 직후 복사본으로 한 번 더 리허설</li><li>도메인 연결 전에 본 이전, 같은 대조표로 확인</li></ul>'}</dd>
+  </dl>`;
+  // 회원 화면
+  const sel = $('#pv-mem'); const cur = sel.value;
+  const cnt = {}; L.res.forEach(r => { if (r.mem.kind === 'linked') cnt[r.o.mid] = (cnt[r.o.mid] || 0) + 1; });
+  const tops = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  sel.innerHTML = tops.map(([id, n]) => { const m = MEMBERS.find(x => x.id === id); return `<option value="${id}">${m.name} · ${id} · 주문 ${n}건</option>`; }).join('');
+  if (cur && cnt[cur]) sel.value = cur;
+  drawPhone();
+}
+function drawPhone(){
+  const id = $('#pv-mem').value;
+  const list = last.res.filter(r => r.o.mid === id && !r.held).reverse();
+  $('#pv-cnt').textContent = list.length + '건';
+  $('#pv-list').innerHTML = list.length ? list.map(r => `<div class="po"><div class="r1"><span class="num">${r.o.dt.slice(0, 10)}</span><span class="mono" style="font-size:12px">${r.o.no}</span></div><div class="r2">${esc(r.ls[0].name)}${r.ls.length > 1 ? ` 외 ${r.ls.length - 1}개` : ''}</div><div class="r3"><b>${won(r.o.pay)}<span class="unit">원</span></b>${stepChip(r.step)}</div></div>`).join('') : '<div class="empty">옮긴 주문이 없어요.</div>';
+}
+function stepChip(s){ const m = { '배송완료':'neu', '취소':'warn', '반품·환불':'warn', '배송중':'info', '상품준비':'info', '결제확인':'info' }; return `<span class="chip ${m[s] || 'neu'}">${s}</span>`; }
+function drawSteps(){
+  const L = last;
+  const st = { src: 'done', map: L.stFail || L.memFail || L.goodsFail ? 'warn' : 'done', prev: 'done', check: L.pass ? 'done' : 'warn', report: L.pass ? 'done' : '' };
+  $$('#mig-steps a').forEach(a => { a.className = st[a.dataset.k] || ''; });
+}
+function drawAll(){ drawMap(); drawRes(); drawPrev(); drawCheck(); drawReport(); drawSteps(); }
+
+function doRun(btn){
+  const bs = $$('[data-run]').concat([$('#mbar-btn')]);
+  bs.forEach(b => { b.classList.add('loading'); b.dataset.t = b.textContent; b.textContent = '리허설 중'; });
+  setTimeout(() => {
+    last = rehearse(); runs.push(last); dirty = false; prevLimit = 10; prevFilter = last.pass ? 'all' : 'focus';
+    drawAll();
+    toast(last.pass ? `리허설 ${last.n}차 통과 · 금액 차이 0원` : `리허설 ${last.n}차 끝 · 보류 ${last.held}건`);
+    $('#mbar-btn').classList.remove('loading');
+  }, 700);
+}
+
+/* ---------- 탭 2: 패치 ---------- */
+const PATCHES = [{"seq":2385,"date":"2026.10.14","type":"보안","title":"2026년 10월 2차 보안 패치 (보안 취약점 개선)","areas":["프로그래밍"],"db":false,"mod":["app/controllers/member_process.php","app/libraries/memberlibrary.php"],"new":[],"allmod":2,"allnew":0},{"seq":2379,"date":"2026.10.01","type":"개선","title":"2026년 10월 1차 개선 패치 (쇼핑몰 관리자 보안 및 개인정보 보호 정책 개선)","areas":["프로그래밍","데이터베이스"],"db":true,"mod":["admin/skin/default/batch/emoney_form.html","admin/skin/default/batch/point_form.html","admin/skin/default/batch/restock_notify_sms.html","admin/skin/default/batch/sms_form.html","admin/skin/default/css/common-ui.css","admin/skin/default/excel/excel_download.html","admin/skin/default/export/catalog.html","admin/skin/default/member/email_form_dormancy.html","admin/skin/default/member/member_download_info.html","admin/skin/default/member/sms_form_dormancy.html","admin/skin/default/order/_excel_download.html","admin/skin/default/order/catalog.html","admin/skin/default/order/sales.html","admin/skin/default/setting/manager.html","admin/skin/default/setting/manager_log.html","admin/skin/default/setting/manager_log_list.html","admin/skin/default/setting/manager_reg.html","admin/skin/default/setting/manager_security.html","admin/skin/default/tooltip/manager.html","admin/skin/default/tooltip/protect.html","admin/skin/default/tooltip/provider.html","app/config/_pc_menu.ini","app/controllers/admin/accountall.php","app/controllers/admin/batch.php","app/controllers/admin/batch_process.php","app/controllers/admin/board.php","app/controllers/admin/coupon.php","app/controllers/admin/excel_spout.php","app/controllers/admin/export.php","app/controllers/admin/export_process.php","app/controllers/admin/goods.php","app/controllers/admin/joincheck.php","app/controllers/admin/member.php","app/controllers/admin/member_process.php","app/controllers/admin/order.php","app/controllers/admin/promotion.php","app/controllers/admin/returns.php","app/controllers/admin/sales_process.php","app/controllers/admin/setting.php","app/controllers/admin/setting_process.php","app/controllers/base/CI_all_variable.php","app/controllers/base/admin_base.php","app/controllers/cli/excel_down.php","app/controllers/common.php","app/controllers/joincheck.php","app/helpers/board_helper.php","app/helpers/common_helper.php","app/javascript/js/admin-common-ui.js","app/javascript/js/admin-exportCatalog.js","app/javascript/js/admin-manager.js","app/javascript/js/admin-orderCatalog.js","app/javascript/js/admin-settingProtectReady.js","app/javascript/js/admin/memberList.js","app/javascript/js/batch.js","app/libraries/Board/BoardReportDetail.php","app/libraries/Board/BoardReportLibrary.php","app/libraries/managerlog.php","app/libraries/privatemasking.php","app/models/admin_menu.php","app/models/authmodel.php","app/models/boardbulkorder.php","app/models/boardmodel.php","app/models/boardreportmodel.php","app/models/couponmodel.php","app/models/excelexportmodel.php","app/models/excelmembermodel.php","app/models/excelmodel.php","app/models/exportmodel.php","app/models/goodsqna.php","app/models/goodsreview.php","app/models/joincheckmodel.php","app/models/membermodel.php","app/models/ordermodel.php","app/models/personcartmodel.php","app/models/promotionmodel.php","app/models/refundmodel.php","app/models/salesmodel.php","app/models/usedmodel.php"],"new":["admin/skin/default/order/excel_download_info.html","app/config/strict_search_fields.php","app/libraries/excelsecurity.php"],"allmod":78,"allnew":3},{"seq":2371,"date":"2026.09.16","type":"개선","title":"2026년 9월 3차 개선 패치 (대체문구 상품 JSON-LD 가격 미노출)","areas":["프로그래밍"],"db":false,"mod":["app/libraries/jsonldlib.php"],"new":[],"allmod":1,"allnew":0},{"seq":2370,"date":"2026.09.10","type":"개선","title":"2026년 9월 2차 기능 및 오류 패치 (엑심베이 결제 취소 및 환불 로직 개선외)","areas":["사용자스킨"],"db":false,"mod":["data/skin/default_gl/_modules/display/goods_display_lattice_a.html","data/skin/default_gl/_modules/display/goods_display_lattice_b.html","data/skin/default_gl/_modules/display/goods_display_list.html","data/skin/default_gl/_modules/display/goods_display_rolling_h.html","data/skin/default_gl/_modules/display/goods_display_rolling_v.html","data/skin/default_gl/_modules/display/goods_display_video_lattice_a.html","data/skin/default_gl/_modules/display/goods_display_video_lattice_b.html","data/skin/default_gl/_modules/display/goods_display_video_list.html","data/skin/default_gl/_modules/display/goods_display_video_person.html","data/skin/default_gl/_modules/display/goods_display_video_rolling_h.html","data/skin/default_gl/goods/view.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_lattice_a.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_lattice_b.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_list.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_mobile_center.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_mobile_list.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_rolling_h.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_lattice_a.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_lattice_b.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_list.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_mobile_lattice_a.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_mobile_list.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_mobile_zoom.html","data/skin/mobile_ver3_default_gl/_modules/display/goods_display_video_rolling_h.html","data/skin/mobile_ver3_default_gl/goods/view.html"],"new":[],"allmod":121,"allnew":0},{"seq":2366,"date":"2026.09.10","type":"개선","title":"2026년 9월 2차 기능 및 오류 패치 (엑심베이 결제 취소 및 환불 로직 개선외)","areas":["프로그래밍","데이터베이스"],"db":true,"mod":["admin/skin/default/design/banner_edit.html","admin/skin/default/design/banner_edit_light.html","admin/skin/default/setting/agreement.html","admin/skin/default/tooltip/member.html","app/controllers/admin/batch_process.php","app/controllers/admin/mobile_app_process.php","app/controllers/admin/order.php","app/controllers/admin/returns_process.php","app/controllers/api/firstmall.php","app/controllers/base/front_base.php","app/controllers/cli/excel_down.php","app/controllers/eximbay.php","app/controllers/member_process.php","app/controllers/mypage_process.php","app/controllers/order.php","app/helpers/goods_helper.php","app/helpers/service_url_helper.php","app/javascript/js/front-layout.js","app/javascript/plugin/anibanner/jquery.anibanner.js","app/libraries/geditorlib.php","app/libraries/orderlibrary.php","app/libraries/ssllib.php","app/libraries/tpl_plugin/function.showDesignBanner.php","app/models/goodsexcel.php","app/models/goodslistmodel.php","app/models/goodsmodel.php","app/models/ordermodel.php","app/models/refundmodel.php"],"new":[],"allmod":28,"allnew":0},{"seq":2357,"date":"2026.09.02","type":"보안","title":"2026년 9월 1차 보안 패치 (보안 취약점 개선)","areas":["프로그래밍"],"db":false,"mod":["app/controllers/admin/design.php","app/controllers/admin/design_process.php","app/controllers/admin/webftp.php"],"new":["app/helpers/filepath_helper.php"],"allmod":3,"allnew":1},{"seq":2353,"date":"2026.08.31","type":"개선","title":"2026년 8월 3차 개선 패치(게시판 첨부파일 API 개선)","areas":["프로그래밍"],"db":false,"mod":["app/config/mimes.php","app/controllers/api/image.php"],"new":[],"allmod":2,"allnew":0},{"seq":2349,"date":"2026.08.28","type":"개선","title":"2026년 8월 2차 기능 패치(검색 최적화 AEO/GEO 기능 추가)","areas":["사용자스킨"],"db":false,"mod":["data/skin/default_gl/_modules/common/html_header.html","data/skin/default_gl/goods/view.html","data/skin/default_gl/layout_header/mypage.html","data/skin/default_gl/layout_header/standard.html","data/skin/mobile_ver3_default_gl/_modules/common/html_header.html","data/skin/mobile_ver3_default_gl/_modules/common/layout_side.html","data/skin/mobile_ver3_default_gl/goods/view.html"],"new":[],"allmod":28,"allnew":0},{"seq":2345,"date":"2026.08.28","type":"개선","title":"2026년 8월 2차 기능 패치(검색 최적화 AEO/GEO 기능 추가)","areas":["프로그래밍","데이터베이스"],"db":true,"mod":["admin/skin/default/css/goods_admin.css","admin/skin/default/goods/regist.html","admin/skin/default/setting/multi_basic.html","admin/skin/default/setting/seo.html","admin/skin/default/tooltip/multi.html","admin/skin/default/tooltip/seo.html","app/config/_pc_menu.ini","app/config/batchDailyEtc.php","app/controllers/admin/goods.php","app/controllers/admin/goods_process.php","app/controllers/admin/setting.php","app/controllers/admin/setting_process.php","app/controllers/base/CI_all_variable.php","app/controllers/base/front_base.php","app/controllers/batch/dailyEtc.php","app/controllers/board.php","app/controllers/cli/excel_up.php","app/controllers/goods.php","app/controllers/joincheck.php","app/controllers/link.php","app/controllers/page.php","app/controllers/promotion.php","app/helpers/common_helper.php","app/helpers/sqlinjection_helper.php","app/javascript/js/admin-goodsReady.js","app/javascript/js/admin-goodsRegist.js","app/models/admin/setting.php","app/models/boardmanager.php","app/models/boardmodel.php","app/models/brandmodel.php","app/models/categorymodel.php","app/models/eventmodel.php","app/models/giftmodel.php","app/models/goodsHandlermodel.php","app/models/goodsexcel.php","app/models/goodsmodel.php","app/models/goodsqna.php","app/models/goodsreview.php","app/models/joincheckmodel.php","app/models/locationmodel.php"],"new":["app/helpers/format_helper.php","app/helpers/service_url_helper.php","app/libraries/jsonldlib.php","app/libraries/seolib.php","app/libraries/sitemaplib.php"],"allmod":40,"allnew":5},{"seq":2341,"date":"2026.08.13","type":"개선","title":"2026년 8월 1차 오류 패치 (GA4 장바구니 오류 수정 외)","areas":["프로그래밍"],"db":false,"mod":["app/controllers/goods.php","app/controllers/order.php","app/controllers/sns_process.php","app/libraries/ga4library.php","app/libraries/social/naver/NaverConfig.php","app/models/goodsflowmodel.php"],"new":[],"allmod":6,"allnew":0}];
+const CUSTOM = {
+  'app/controllers/order.php': '주문서에 사업자 구매 정보 칸을 추가함',
+  'app/models/ordermodel.php': '이전 주문 조회를 주문 목록에 연결함',
+  'app/controllers/admin/order.php': '관리자 주문 목록에 옛 주문번호 표시',
+  'app/controllers/member_process.php': '가입 때 추천인 칸을 추가함',
+  'app/controllers/mypage_process.php': '마이페이지에 이전 주문 탭을 추가함'
+};
+const OWN = ['app/controllers/legacy_order.php','app/models/legacyordermodel.php','data/skin/shop_pc/mypage/legacy_order.html','data/skin/shop_m/mypage/legacy_order.html'];
+const SKIN_MAP = { 'data/skin/default_gl/': 'data/skin/shop_pc/', 'data/skin/mobile_ver3_default_gl/': 'data/skin/shop_m/' };
+const SKIN_CUSTOM = { 'goods/view.html': '상세 화면을 시안대로 다시 짬', '_modules/common/html_header.html': '공통 머리에 글꼴·분석 코드 추가', 'layout_header/standard.html': '상단 메뉴를 시안대로 바꿈' };
+const CHECKS = [
+  ['로그인 · 로그아웃','회원'], ['회원가입 (추천인 칸 포함)','회원'], ['상품 상세 · 옵션 고르기','상품'], ['장바구니 담기 · 수량 바꾸기','주문'],
+  ['주문서 작성 (사업자 구매 칸 포함)','주문'], ['PG 카드 결제 → 바로 취소','결제'], ['간편결제 (네이버페이 · 카카오페이)','결제'], ['무통장 주문 → 입금확인','결제'],
+  ['마이페이지 주문 조회 (이전 주문 탭 포함)','주문'], ['관리자 주문 목록 · 단계 바꾸기','관리자'], ['관리자 엑셀 내려받기 (10월 1차 패치 영역)','관리자']
+];
+const PS = { sel: new Set(PATCHES.map(p => p.seq)), filter: 'all', backup: null, test: null, checks: CHECKS.map(() => ({ t: 'none', m: 'none', note: '' })), live: null, done: false, rb: null };
+
+function analyze(){
+  const ps = PATCHES.filter(p => PS.sel.has(p.seq)).slice().sort((a, b) => a.seq - b.seq);
+  const files = new Map(); const newF = new Map();
+  ps.forEach(p => { p.mod.forEach(f => { if (!files.has(f)) files.set(f, []); files.get(f).push(p.seq); }); p.new.forEach(f => { if (!newF.has(f)) newF.set(f, []); newF.get(f).push(p.seq); }); });
+  const merge = [], skinMerge = [], skinCopy = [], over = [];
+  files.forEach((seqs, f) => {
+    const sk = Object.keys(SKIN_MAP).find(k => f.startsWith(k));
+    if (sk){ const rel = f.slice(sk.length); const to = SKIN_MAP[sk] + rel; (SKIN_CUSTOM[rel] ? skinMerge : skinCopy).push({ f, to, seqs, why: SKIN_CUSTOM[rel] || '' }); }
+    else if (CUSTOM[f]) merge.push({ f, seqs, why: CUSTOM[f] });
+    else over.push({ f, seqs });
+  });
+  const db = ps.filter(p => p.db);
+  return { ps, merge, skinMerge, skinCopy, over, newF: [...newF].map(([f, seqs]) => ({ f, seqs })), db, total: files.size + newF.size };
+}
+let A = analyze();
+function stage(){
+  if (!PS.backup) return 0;
+  if (!PS.test) return 1;
+  if (PS.checks.some(c => c.t !== 'ok')) return 2;
+  if (!PS.live) return 3;
+  if (PS.checks.some(c => c.m !== 'ok')) return 4;
+  if (!PS.done) return 5;
+  return 6;
+}
+const STAGES = ['소스 · DB 백업','시험 서버 반영','시험 서버 점검','본 서버 반영','본 서버 점검','회차 기록 남기기'];
+function nextAction(){
+  const s = stage();
+  if (s === 0) return ['backup','소스 · DB 백업하기'];
+  if (s === 1) return ['test','시험 서버에 반영하기'];
+  if (s === 2) return PS.checks.some(c => c.t === 'bad') ? ['fixTest','문제 고치고 다시 확인'] : (PS.checks.every(c => c.t === 'none') ? ['fillTest','시험 결과 채우기 (예시)'] : ['allTest','남은 항목 통과로 표시']);
+  if (s === 3) return ['live','본 서버에 반영하기'];
+  if (s === 4) return ['fillLive','본 서버 결과 채우기 (예시)'];
+  if (s === 5) return ['finish','이번 회차 기록 남기기'];
+  return ['reset','처음부터 다시 보기'];
+}
+const pnums = seqs => seqs.map(s => `<span class="pn">${s}</span>`).join('');
+function drawPList(){
+  const cnt = a => PATCHES.filter(p => a === 'all' || p.areas.includes(a)).length;
+  $('#pf').innerHTML = [['all','전체'],['프로그래밍','프로그래밍'],['데이터베이스','DB'],['사용자스킨','사용자스킨']].map(f => `<button class="fchip" type="button" data-pa="${f[0]}" aria-pressed="${PS.filter === f[0]}">${f[1]}<b>${cnt(f[0])}</b></button>`).join('');
+  const list = PATCHES.filter(p => PS.filter === 'all' || p.areas.includes(PS.filter));
+  $('#pl-tbl tbody').innerHTML = list.map(p => {
+    const on = PS.sel.has(p.seq);
+    const area = p.areas.map(a => `<span class="chip ${a === '데이터베이스' ? 'warn' : a === '사용자스킨' ? 'info' : 'neu'}">${a === '데이터베이스' ? 'DB' : a}</span>`).join(' ');
+    const nf = p.mod.length + p.new.length;
+    return `<tr class="${on ? '' : 'off'}"><td class="lead" data-l=""><label class="ck" aria-label="${p.seq}번 패치 포함"><input type="checkbox" data-ps="${p.seq}" ${on ? 'checked' : ''}><i></i></label><span class="mob-t">${esc(p.title.replace(/^2026년\s*/, ''))}</span></td>
+      <td class="num" data-l="번호">${p.seq}</td><td class="num w" data-l="날짜">${p.date.slice(5)}</td>
+      <td class="hide-m" data-l="제목">${esc(p.title.replace(/^2026년\s*/, ''))}</td>
+      <td class="w" data-l="영역">${area}</td>
+      <td class="r" data-l="파일">${nf}${p.allmod > p.mod.length ? `<span class="s" style="display:block">모든 스킨 ${p.allmod}</span>` : ''}</td></tr>`;
+  }).join('');
+}
+function fileList(items, kind){
+  return '<ul class="flist">' + items.map(x => `<li><span class="path">${kind === 'skin' ? x.to : x.f}</span><span class="pt">${pnums(x.seqs)}</span>${kind === 'skin' ? `<span class="why">← <span class="mono">${x.f.replace('data/skin/', '')}</span>${x.why ? ' · 우리가 고친 곳: ' + x.why : ' · 우리가 안 고친 파일이라 그대로 복사'}</span>` : x.why ? `<span class="why">우리가 고친 곳: ${x.why}</span>` : ''}</li>`).join('') + '</ul>';
+}
+const CV = '<svg class="cv" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 8l5 5 5-5"/></svg>';
+function drawConf(){
+  const a = A;
+  const open = $$('#conf details[open]').map(d => d.dataset.k);
+  const g = (k, t, d, n, body, def) => `<details class="fgrp" data-k="${k}" ${open.includes(k) || (def && !open.length) ? 'open' : ''}><summary><span><span class="t">${t}</span><br><span class="d">${d}</span></span><span class="n">${n}</span>${CV}</summary>${body}</details>`;
+  $('#conf').innerHTML =
+    g('m', '직접 합치기', '우리가 고친 프로그램 파일을 패치도 고침 · 소스설명(diff)을 보고 줄 단위로 합쳐요', a.merge.length, fileList(a.merge), true) +
+    g('s', '우리 스킨에 옮기기', `패치는 기본 스킨 기준이라 PC·모바일 스킨에 직접 옮겨요 · 우리가 고친 ${a.skinMerge.length}개는 합치기`, a.skinMerge.length + a.skinCopy.length, fileList(a.skinMerge, 'skin') + (a.skinCopy.length ? `<details class="sub2"><summary>우리가 안 고친 스킨 파일 ${a.skinCopy.length}개 · 그대로 복사</summary>${fileList(a.skinCopy, 'skin')}</details>` : '')) +
+    g('d', 'DB 패치', '패치 안의 dbpatch.php를 올리고 /dbpatch/patch 실행 · 오래된 것부터', a.db.length, '<ul class="flist">' + a.db.map((p, i) => `<li><span>${i + 1}번째 · ${p.seq} ${esc(p.title.replace(/^2026년\s*/, ''))}</span><span class="pt"><span class="pn">${p.date.slice(5)}</span></span></li>`).join('') + '</ul>') +
+    g('n', '새 파일', '내려받아 같은 경로에 올려요 (폴더 없으면 만들기)', a.newF.length, fileList(a.newF)) +
+    g('o', '그대로 덮어쓰기', '우리가 손대지 않은 파일 · 패치 파일로 바꿔요', a.over.length, fileList(a.over)) +
+    `<p class="note">우리가 새로 만든 파일 ${OWN.length}개(<span class="mono">legacy_order</span> 등)는 퍼스트몰 패치와 겹치지 않아요. 커스텀을 되도록 새 파일로 빼 두는 이유예요.</p>`;
+}
+function drawBk(){
+  if (!PS.backup){ $('#bk-out').innerHTML = '<p class="note" style="margin:0">아직 백업하지 않았어요.</p>'; return; }
+  const b = PS.backup;
+  $('#bk-out').innerHTML = `<div class="bk"><div><span class="lb">소스</span><span class="path">${b.src}</span><div class="sz">${b.srcSz} · ${b.t}</div></div><div><span class="lb">DB</span><span class="path">${b.db}</span><div class="sz">${b.dbSz} · ${b.t}</div></div></div><p class="note">git: <span class="mono">before-2026q4</span> 표시, 작업 브랜치 <span class="mono">patch/2026q4</span> · 파일 크기는 예시예요.</p>`;
+}
+function drawLog(el, log, empty){ $(el).innerHTML = log ? '<ul class="log">' + log.map(l => `<li><time>${l[0]}</time><span>${l[1]}</span></li>`).join('') + '</ul>' : `<p class="note" style="margin:0">${empty}</p>`; }
+function drawChecks(){
+  const s = stage();
+  $('#ck-tbl tbody').innerHTML = CHECKS.map((c, i) => {
+    const st = PS.checks[i];
+    const lab = v => ({ none: '미확인', ok: '통과', bad: '문제' }[v]);
+    return `<tr><td class="lead" data-l="확인할 것"><span>${c[0]}${st.note ? `<span class="cknote ${st.t === 'ok' ? 'fixed' : ''}">${st.note}</span>` : ''}</span></td><td class="s" data-l="구분">${c[1]}</td>
+      <td data-l="시험 서버"><button type="button" class="stbtn ${st.t}" data-ck="${i}" data-sv="t" ${PS.test && !PS.live ? '' : 'disabled'} aria-label="${c[0]} 시험 서버 ${lab(st.t)}">${lab(st.t)}</button></td>
+      <td data-l="본 서버"><button type="button" class="stbtn ${st.m}" data-ck="${i}" data-sv="m" ${PS.live && !PS.done ? '' : 'disabled'} aria-label="${c[0]} 본 서버 ${lab(st.m)}">${lab(st.m)}</button></td></tr>`;
+  }).join('');
+}
+function drawPres(){
+  const a = A; const s = stage(); const [, label] = nextAction();
+  const hard = a.merge.length + a.skinMerge.length;
+  $('#pres').innerHTML = `
+    <div class="lb">${PS.done ? '이번 회차 완료 · 손으로 합친 파일' : `이번 회차 패치 ${a.ps.length}건 중 손으로 합칠 파일`}</div>
+    <div class="vv">${hard}<span style="font-size:20px;font-weight:600;margin-left:4px">개</span></div>
+    <p class="why">나머지 ${a.total - hard}개는 덮어쓰기·복사·새로 올리기라 손이 덜 가요.</p>
+    <ul class="kv">
+      <li><span>바뀌는 파일</span><b>${a.total}개</b></li>
+      <li><span>DB 패치</span><b>${a.db.length}건</b></li>
+      <li><span>우리 스킨에 옮길 파일</span><b>${a.skinMerge.length + a.skinCopy.length}개</b></li>
+      <li><span>점검 통과</span><b class="${PS.checks.some(c => c.t === 'bad') ? 'bad' : ''}">시험 ${PS.checks.filter(c => c.t === 'ok').length} · 본 ${PS.checks.filter(c => c.m === 'ok').length} / ${CHECKS.length}</b></li>
+    </ul>
+    <ol class="prog">${STAGES.map((t, i) => `<li class="${i < s ? 'done' : i === s ? 'now' : ''}"><span class="d"></span>${t}</li>`).join('')}</ol>
+    <div class="btns"><button class="btn btn-p" type="button" data-next>${label}</button></div>`;
+  // 카드 버튼 상태
+  $$('#tab-patch [data-act]').forEach(b => {
+    const k = b.dataset.act;
+    b.disabled = (k === 'backup' && !!PS.backup) || (k === 'test' && (!PS.backup || !!PS.test)) || (k === 'fillTest' && (!PS.test || s !== 2)) || (k === 'live' && (s !== 3)) || (k === 'rbtest' && !PS.test);
+  });
+  updateMbar();
+}
+function drawPatch(){ A = analyze(); drawPList(); drawConf(); drawBk(); drawLog('#test-out', PS.test, '백업을 마친 뒤에 할 수 있어요.'); drawChecks(); drawLog('#live-out', PS.live, '시험 서버 점검이 모두 통과해야 할 수 있어요.'); $('#rb-out').innerHTML = PS.rb ? '<ul class="log">' + PS.rb.map(l => `<li><time>${l[0]}</time><span>${l[1]}</span></li>`).join('') + '</ul>' : ''; drawPres(); }
+
+function clock(addMin){ const d = new Date(Date.now() + (addMin || 0) * 60000); return hm(d); }
+function act(k){
+  const a = A;
+  if (k === 'backup'){ PS.backup = { t: clock(), src: 'backup/2026q4/src_' + clock().replace(':', '') + '.tar.gz', db: 'backup/2026q4/db_' + clock().replace(':', '') + '.sql.gz', srcSz: '1.2GB', dbSz: '386MB' }; toast('소스와 DB를 백업했어요'); }
+  else if (k === 'test'){
+    PS.test = [
+      [clock(0), `작업 브랜치 <span class="mono">patch/2026q4</span>에서 시작`],
+      [clock(1), `그대로 덮어쓰기 ${a.over.length}개, 새 파일 ${a.newF.length}개 올림`],
+      [clock(6), `직접 합치기 ${a.merge.length}개 — 패치 쪽 변경을 넣고 우리 커스텀 줄은 유지`],
+      [clock(14), `스킨 옮기기 ${a.skinMerge.length + a.skinCopy.length}개 (PC <span class="mono">shop_pc</span> · 모바일 <span class="mono">shop_m</span>)`],
+      [clock(20), `DB 패치 ${a.db.length}건 차례로 실행: ${a.db.slice().sort((x, y) => x.seq - y.seq).map(p => p.seq).join(' → ')}`],
+      [clock(22), 'PHP 오류 로그 비어 있음, 점검표 시작']
+    ];
+    toast('시험 서버에 반영했어요');
+  }
+  else if (k === 'fillTest'){
+    PS.checks.forEach((c, i) => { c.t = 'ok'; c.note = ''; });
+    const bad = CHECKS.findIndex(c => c[0].startsWith('관리자 엑셀'));
+    PS.checks[bad].t = 'bad'; PS.checks[bad].note = '내려받기 사유 입력 창이 안 열림 → admin/order.php 합칠 때 빠진 줄 의심';
+    toast('시험 서버에서 1건 문제가 나왔어요');
+  }
+  else if (k === 'fixTest'){ PS.checks.forEach(c => { if (c.t === 'bad'){ c.t = 'ok'; c.note = c.note.includes('admin/order.php') ? '빠진 줄 다시 합침 · 다시 확인 통과' : '고친 뒤 다시 확인 통과'; } }); toast('고친 뒤 다시 확인해서 통과했어요'); }
+  else if (k === 'allTest'){ PS.checks.forEach(c => { if (c.t !== 'ok'){ c.t = 'ok'; } }); }
+  else if (k === 'live'){
+    PS.live = [
+      [clock(0), '점검 화면 켜기 (주문 잠깐 막음)'],
+      [clock(1), '본 서버 DB만 다시 백업 (시험 서버 반영 뒤 들어온 주문 포함)'],
+      [clock(3), `시험 서버와 같은 커밋 반영 · 파일 ${a.total}개`],
+      [clock(8), `DB 패치 ${a.db.length}건 실행`],
+      [clock(10), '점검 화면 끄기 · 본 서버 점검표 시작']
+    ];
+    toast('본 서버에 반영했어요');
+  }
+  else if (k === 'fillLive'){ PS.checks.forEach(c => c.m = 'ok'); toast('본 서버 점검이 모두 통과했어요'); }
+  else if (k === 'finish'){ PS.done = true; toast('이번 회차를 기록했어요 · 다음 회차는 여기서 이어서'); }
+  else if (k === 'reset'){ Object.assign(PS, { backup: null, test: null, live: null, done: false, rb: null }); PS.checks = CHECKS.map(() => ({ t: 'none', m: 'none', note: '' })); }
+  else if (k === 'rbtest'){ PS.rb = [[clock(0), '시험 서버를 반영 전 표시로 되돌림 (git)'], [clock(4), 'DB 덤프 복원'], [clock(12), '로그인 · 주문 · 카드 결제 확인 → 반영 전 상태와 같음']]; toast('시험 서버에서 되돌리기를 연습했어요'); }
+  drawPatch();
+}
+
+/* ---------- 모바일 아래 버튼 ---------- */
+let tab = 'mig';
+function updateMbar(){
+  const b = $('#mbar-btn'); if (b.classList.contains('loading')) return;
+  if (tab === 'mig'){ b.textContent = `리허설 ${runs.length + 1}차 실행`; b.dataset.m = 'run'; $('#mbar-hint').textContent = last ? (last.pass ? '통과했어요 · 최종 이전 직전에 한 번 더 돌려요' : (allRecOn() ? '규칙을 정했어요 · 다시 돌려 보세요' : `보류 ${last.held}건 · 보완 규칙을 켜고 다시 돌려요`)) : ''; }
+  else { const [k, l] = nextAction(); b.textContent = l; b.dataset.m = k; $('#mbar-hint').textContent = `${STAGES[Math.min(stage(), 5)]} 단계`; }
+}
+
+/* ---------- 이벤트 ---------- */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button, a'); if (!t) return;
+  if (t.matches('[data-tab]')){ setTab(t.dataset.tab); return; }
+  if (t.matches('[data-run]')){ doRun(t); return; }
+  if (t.matches('[data-rec]')){ cfg.wd = cfg.gone = cfg.dedupe = true; Object.assign(cfg.map, REC_MAP); dirty = true; drawMap(); drawRes(); toast('추천 규칙을 모두 켰어요 · 다시 실행해 보세요'); return; }
+  if (t.matches('[data-pf]')){ prevFilter = t.dataset.pf; prevLimit = 10; drawPrev(); return; }
+  if (t.id === 'prev-more'){ prevLimit += 10; drawPrev(); return; }
+  if (t.id === 'dl-csv'){ dlCsv(); return; }
+  if (t.id === 'do-print'){ window.print(); return; }
+  if (t.id === 'mbar-btn'){ if (t.dataset.m === 'run') doRun(t); else act(t.dataset.m); return; }
+  if (t.matches('[data-next]')){ act(nextAction()[0]); return; }
+  if (t.matches('[data-act]')){ act(t.dataset.act); return; }
+  if (t.matches('[data-pa]')){ PS.filter = t.dataset.pa; drawPList(); return; }
+  if (t.matches('[data-ck]')){ const c = PS.checks[+t.dataset.ck]; const k = t.dataset.sv; c[k] = c[k] === 'ok' ? 'bad' : 'ok'; if (k === 't') c.note = c.t === 'bad' ? '문제 표시함 · 원인 찾는 중' : (c.note.startsWith('문제 표시함') ? '' : c.note); drawChecks(); drawPres(); return; }
+  if (t.matches('#mig-steps a')){ e.preventDefault(); $(t.getAttribute('href')).scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches('[data-rule]')){ cfg[t.dataset.rule] = t.checked; dirty = true; drawRes(); return; }
+  if (t.matches('[data-st]')){ cfg.map[t.dataset.st] = t.value; t.classList.toggle('empty', !t.value); dirty = true; drawRes(); return; }
+  if (t.id === 'pv-mem'){ drawPhone(); return; }
+  if (t.matches('[data-ps]')){
+    const s = +t.dataset.ps; t.checked ? PS.sel.add(s) : PS.sel.delete(s);
+    if (PS.backup){ Object.assign(PS, { backup: null, test: null, live: null, done: false, rb: null }); PS.checks = CHECKS.map(() => ({ t: 'none', m: 'none', note: '' })); toast('패치 목록이 바뀌어서 백업부터 다시 해요'); }
+    drawPatch();
+  }
+});
+$('.seg').addEventListener('keydown', e => {
+  if (!['ArrowLeft','ArrowRight'].includes(e.key)) return;
+  const nt = tab === 'mig' ? 'patch' : 'mig'; setTab(nt); $(`[data-tab="${nt}"]`).focus();
+});
+function setTab(k){
+  tab = k;
+  $$('.seg button').forEach(b => { const on = b.dataset.tab === k; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
+  $('#tab-mig').hidden = k !== 'mig'; $('#tab-patch').hidden = k !== 'patch';
+  try { history.replaceState(null, '', k === 'patch' ? '#patch' : '#'); } catch (_) {}
+  window.scrollTo(0, 0);
+  updateMbar();
+}
+function dlCsv(){
+  const L = last;
+  const head = ['옛주문번호','퍼스트몰번호(예시)','주문일','회원연결','원본결제금액','다시계산금액','차이','옛상태','퍼스트몰단계','결과','사유'];
+  const lines = [head.join(',')].concat(L.res.map(r => [r.o.no, r.fm || '', r.o.dt.slice(0, 10), r.mem.kind === 'linked' ? '회원 ' + r.mem.no : r.mem.kind === 'wd' ? '탈퇴→비회원' : r.mem.kind === 'fail' ? '실패' : '비회원', r.o.pay, r.held ? '' : r.calc, r.held ? '' : r.calc - r.o.pay, r.o.status, r.step || '', r.held ? '보류' : r.applied.length ? '규칙 적용' : '옮김', (r.issues.concat(r.applied)).join(' / ')].join(',')));
+  lines.push(''); lines.push(`합계,,,,${L.srcSum},${L.movedSum},${L.movedSum - L.srcSum},,,,`);
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `리허설_${L.n}차_대조표_예시.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('대조표 CSV를 내려받았어요');
+}
+
+/* ---------- 시작 ---------- */
+drawSrc();
+last = rehearse(); runs.push(last);
+drawAll(); drawPatch();
+if (location.hash === '#patch') setTab('patch');
+</script>
+</body>
+</html>
