@@ -40,6 +40,7 @@ button{cursor:pointer}
 .path{font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--ink)}
 .unit{font-size:13px;color:var(--mut);font-weight:500;margin-left:2px}
 .mut{color:var(--mut)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .tag-ex{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:6px;background:var(--neu-bg);color:var(--neu);font-size:12px;font-weight:600;vertical-align:1px;white-space:nowrap}
 
 /* 띠 */
@@ -47,27 +48,105 @@ button{cursor:pointer}
 .band b{font-weight:700;margin-right:6px}
 
 /* 머리 */
-.top{background:var(--card)}
-.top .in{max-width:1248px;margin:0 auto;padding:0 24px;height:68px;display:flex;align-items:center;gap:24px}
-.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.top{padding:16px 24px 0}
+.top .in{max-width:1200px;margin:0 auto;padding:0 8px 0 16px;height:64px;display:flex;align-items:center;gap:24px;background:var(--card);border-radius:var(--r-lg)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .logo{width:32px;height:32px;border-radius:10px;background:var(--brand);display:grid;place-items:center;flex-shrink:0}
 .brand b{font-size:17px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
-.brand span{font-size:13px;color:var(--mut);white-space:nowrap}
+.brand .crumb{font-size:13px;color:var(--mut);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.brand .crumb svg{color:var(--mut-2)}
 .seg{margin-left:auto;display:flex;gap:4px;background:var(--track);padding:4px;border-radius:var(--r-pill)}
-.seg button{border:0;background:transparent;height:40px;padding:0 18px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.seg button{border:0;background:transparent;height:40px;padding:0 20px;border-radius:var(--r-pill);font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:var(--sh-pill)}
 .seg button:hover:not([aria-selected="true"]){color:var(--ink)}
 
 /* 본문 */
-.wrap{max-width:1248px;margin:0 auto;padding:40px 24px 96px}
-.head{display:flex;align-items:flex-end;gap:24px;margin-bottom:24px}
-.head h1{margin:0;font-size:32px;line-height:1.25;font-weight:700;letter-spacing:-.025em}
-.head p{margin:8px 0 0;color:var(--ink-2);max-width:640px}
+.wrap{max-width:1248px;margin:0 auto;padding:48px 24px 120px}
+.head{display:flex;align-items:flex-end;gap:24px;margin-bottom:32px}
+.head h1{margin:0;font-size:44px;line-height:1.25;font-weight:700;letter-spacing:-.03em}
+.head p{margin:12px 0 0;color:var(--ink-2);max-width:680px;font-size:17px}
 .head .meta{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
 .col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .side{position:sticky;top:16px;display:flex;flex-direction:column;gap:16px}
 
-.card{background:var(--card);border-radius:var(--r-lg);padding:28px;min-width:0}
+.card{background:var(--card);border-radius:var(--r-lg);padding:32px;min-width:0}
+.ico{width:16px;height:16px;flex-shrink:0;display:inline-block;vertical-align:-3px}
+
+/* 첫 화면: 옮기기 전과 후 */
+.hero{border-radius:var(--r-xl);padding:32px 36px;display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:0 36px;margin-bottom:16px}
+.hero .main{min-width:0}
+.hero .aside{border-left:1px solid var(--line-2);padding-left:32px;display:flex;flex-direction:column;min-width:0}
+.hero .top2{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px;color:var(--ink-2);font-weight:600}
+.hero .top2 .t{color:var(--mut);font-weight:500}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1.2fr) minmax(0,.9fr);gap:8px;margin-top:20px;align-items:stretch}
+.cmp .b{padding:20px 0;min-width:0}
+.cmp .b.tg{background:var(--brand-tint);border-radius:var(--r-lg);padding:20px 24px}
+.cmp .b.d{padding-left:24px}
+.cmp .b.d .n{font-size:32px;margin-top:28px}
+.cmp .b.d .n small{font-size:17px}
+.cmp .lb{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-2);font-weight:600;white-space:nowrap}
+.cmp .lb .ico{color:var(--mut)}
+.cmp .b.tg .lb,.cmp .b.tg .lb .ico{color:var(--brand-text)}
+.cmp .n{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-top:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cmp .n small{font-size:20px;font-weight:600;margin-left:2px;letter-spacing:0;color:var(--ink-2)}
+.cmp .m{font-size:15px;color:var(--ink-2);margin-top:6px;font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.cmp .ok,.cmp .ok small{color:var(--ok)}
+.cmp .bad,.cmp .bad small{color:var(--bad)}
+.cmp .ar{display:grid;place-items:center;color:var(--mut-2)}
+.cmp .ar svg{width:24px;height:24px}
+.meter{height:12px;border-radius:var(--r-pill);background:var(--track);overflow:hidden;display:flex;gap:2px;margin-top:24px}
+.meter i{display:block;background:var(--brand);border-radius:var(--r-pill);transition:width .5s ease}
+.meter i.h{background:var(--bad-dot)}
+.meter-l{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);margin-top:8px;font-variant-numeric:tabular-nums}
+.meter-l span{display:inline-flex;align-items:center;gap:6px}
+.meter-l span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand)}
+.meter-l span.hd::before{background:var(--bad-dot)}
+.meter-l .tot{margin-left:auto;color:var(--mut)}
+.meter-l .tot::before{display:none}
+.chk4{list-style:none;margin:24px 0 0;padding:20px 0 0;border-top:1px solid var(--line-2);display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.chk4 li{display:flex;gap:8px;align-items:flex-start;padding:0 16px;border-left:1px solid var(--line-2);min-width:0}
+.chk4 li:first-child{border-left:0;padding-left:0}
+.chk4 .si{width:20px;height:20px;flex-shrink:0;margin-top:1px}
+.chk4 .k{display:block;font-size:13px;color:var(--mut)}
+.chk4 b{display:block;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.si.ok{color:var(--ok-dot)} .si.bad{color:var(--bad-dot)}
+.hero .why{font-size:15px;color:var(--ink);font-weight:600;margin:0 0 16px;line-height:1.5}
+.hero .btns{display:flex;flex-direction:column;gap:8px}
+.hero .btns .btn{width:100%;height:48px;font-size:15px}
+.hero .hh{font-size:14px;font-weight:700;margin:28px 0 8px;color:var(--ink)}
+.hero .hist li{padding:12px 0}
+.hero .hist li:first-child{padding-top:0}
+
+/* 정합성 검증 */
+.verdict{display:flex;gap:12px;align-items:flex-start;padding:20px 24px;border-radius:var(--r-lg);background:var(--soft);margin-bottom:24px}
+.verdict.ok{background:var(--ok-bg)}
+.verdict .si{width:28px;height:28px;flex-shrink:0}
+.verdict b{display:block;font-size:20px;font-weight:700;letter-spacing:-.015em;line-height:1.35}
+.verdict.ok b{color:var(--ok)}
+.verdict span{display:block;font-size:14px;color:var(--ink-2);margin-top:2px}
+.rc{width:100%;border-collapse:separate;border-spacing:0}
+.rc th{font-size:13px;font-weight:500;color:var(--mut);text-align:left;padding:0 16px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rc th:first-child,.rc td:first-child{padding-left:0}
+.rc th:last-child,.rc td:last-child{padding-right:0}
+.rc td{padding:20px 16px;border-bottom:1px solid var(--line-2);vertical-align:top}
+.rc tr:last-child td{border-bottom:0}
+.rc .r{text-align:right}
+.rc .k b{display:block;font-size:17px;font-weight:700}
+.rc .k span{display:block;font-size:13px;color:var(--mut);margin-top:2px}
+.rc .v{font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.3}
+.rc .v .unit{font-size:14px}
+.rc .v.ok,.rc .v.ok .unit{color:var(--ok)}
+.rc .v.bad,.rc .v.bad .unit{color:var(--bad)}
+.rc td.st{width:1%;padding-top:24px}
+.rl{list-style:none;margin:0;padding:0}
+.rl li{display:grid;grid-template-columns:20px 160px 72px minmax(0,1fr);gap:12px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line-2);font-size:15px}
+.rl li:last-child{border-bottom:0}
+.rl .si{width:20px;height:20px}
+.rl .k{font-weight:600}
+.rl .nt{font-size:13px;color:var(--mut)}
+.rl b{font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.rl li.bad b{color:var(--bad)}
 .card h2{margin:0;font-size:20px;line-height:1.3;font-weight:700;letter-spacing:-.015em}
 .card .sub{margin:4px 0 0;font-size:14px;color:var(--mut)}
 .ch{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px}
@@ -76,16 +155,17 @@ button{cursor:pointer}
 
 /* 단계 줄 */
 .steps{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px;padding:0;list-style:none}
-.steps a{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 10px;border-radius:var(--r-pill);background:var(--card);color:var(--ink-2);font-size:14px;font-weight:600;text-decoration:none}
+.steps a:hover{color:var(--ink)}
+.steps a{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px 0 12px;border-radius:var(--r-pill);background:var(--card);color:var(--ink-2);font-size:14px;font-weight:600;text-decoration:none}
 .steps a .d{width:18px;height:18px;border-radius:50%;background:var(--track);display:grid;place-items:center}
 .steps a.done .d{background:var(--ok-dot)}
 .steps a.done .d svg{display:block}
 .steps a .d svg{display:none}
-.steps a.warn .d{background:var(--bad-dot)}
+.steps a.warn .d{background:var(--warn-dot)}
 .steps a.warn .d::after{content:"";width:2px;height:8px;background:#fff;border-radius:1px}
 
 /* 버튼 */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 18px;border-radius:var(--r-pill);border:0;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;padding:0 20px;border-radius:var(--r-pill);border:0;font-size:14px;font-weight:600;white-space:nowrap;transition:background .15s}
 .btn svg{flex-shrink:0}
 .btn-p{background:var(--brand);color:var(--on-brand)}
 .btn-p:hover{background:var(--brand-hover)}
@@ -99,7 +179,7 @@ button{cursor:pointer}
 .btn.loading{pointer-events:none}
 .btn.loading::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.btn-w{width:100%;height:52px;font-size:16px;border-radius:var(--r-md)}
+.btn-w{width:100%;height:52px;font-size:17px;border-radius:var(--r-md)}
 
 /* 칩 */
 .chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--r-pill);font-size:12px;font-weight:600;white-space:nowrap}
@@ -113,7 +193,7 @@ button{cursor:pointer}
 
 /* 필터 칩 */
 .fchips{display:flex;gap:8px;flex-wrap:wrap}
-.fchip{height:36px;padding:0 14px;border-radius:var(--r-pill);border:0;background:var(--soft);color:var(--ink-2);font-size:13px;font-weight:600}
+.fchip{height:36px;padding:0 16px;border-radius:var(--r-pill);border:0;background:var(--soft);color:var(--ink-2);font-size:13px;font-weight:600}
 .fchip b{font-weight:700;margin-left:4px;color:var(--ink)}
 .fchip[aria-pressed="true"]{background:var(--ink);color:#fff}
 .fchip[aria-pressed="true"] b{color:#fff}
@@ -129,6 +209,7 @@ button{cursor:pointer}
 .tbl td.r{font-variant-numeric:tabular-nums}
 .tbl .w{white-space:nowrap}
 .tbl .s{font-size:13px;color:var(--mut)}
+#pl-tbl td.r .s{white-space:nowrap}
 .tbl .l1{display:block}
 .tbl .l2{display:block;font-size:13px;color:var(--mut);margin-top:2px}
 .tbl .l2 .chip{margin-top:2px}
@@ -139,8 +220,10 @@ button{cursor:pointer}
 /* 원본 */
 .raw{background:var(--soft);border-radius:var(--r-md);padding:12px 16px;overflow-x:auto;margin:0;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ink-2);white-space:pre;max-width:100%}
 .raw .hd{color:var(--ink);font-weight:600}
-.facts{display:flex;flex-wrap:wrap;gap:8px 24px;margin:0 0 16px;padding:0;list-style:none;font-size:14px;color:var(--ink-2)}
-.facts b{color:var(--ink);font-weight:600;margin-left:6px;font-variant-numeric:tabular-nums}
+.facts{display:flex;flex-wrap:wrap;gap:12px 0;margin:0 0 20px;padding:0;list-style:none;font-size:13px;color:var(--mut)}
+.facts li{display:flex;flex-direction:column;gap:2px;padding:0 24px;border-left:1px solid var(--line-2)}
+.facts li:first-child{padding-left:0;border-left:0}
+.facts b{color:var(--ink);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
 
 /* 토글 */
 .rules{display:flex;flex-direction:column;gap:4px;margin-top:8px}
@@ -164,20 +247,6 @@ select.sel.empty{border-color:var(--bad-dot);color:var(--bad)}
 .subh .mut{font-weight:400;font-size:13px;margin-left:6px}
 .note{font-size:13px;color:var(--mut);margin:10px 0 0}
 
-/* 검증 */
-.big2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.mt{background:var(--soft);border-radius:16px;padding:20px}
-.mt .lb{font-size:14px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
-.mt .lb .chip{margin-left:auto}
-.mt .vv{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;line-height:1.3}
-.mt .cmp{font-size:13px;color:var(--mut);margin-top:4px;font-variant-numeric:tabular-nums}
-.small4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
-.ms{border-radius:16px;padding:16px;background:var(--soft)}
-.ms .lb{font-size:13px;color:var(--ink-2)}
-.ms .vv{font-size:20px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
-.ms .cmp{font-size:12px;color:var(--mut);margin-top:2px}
-.ms.bad .vv{color:var(--bad)}
-
 /* 사이드 결과 */
 .res .lb{font-size:14px;color:var(--mut);font-weight:500}
 .res .vv{font-size:44px;line-height:1.2;font-weight:700;letter-spacing:-.03em;margin:6px 0 4px;font-variant-numeric:tabular-nums}
@@ -192,7 +261,7 @@ select.sel.empty{border-color:var(--bad-dot);color:var(--bad)}
 .kv li b.ok{color:var(--ok)}
 .res .btns{display:flex;flex-direction:column;gap:8px}
 .res .btns .btn{width:100%}
-.dirty{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:var(--r-md);padding:10px 12px;margin:0 0 12px}
+.dirty{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:var(--r-md);padding:12px;margin:0 0 12px}
 
 .hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .hist li{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line-2);font-size:14px}
@@ -212,7 +281,7 @@ select.sel.empty{border-color:var(--bad-dot);color:var(--bad)}
 .pv{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;margin-top:24px;align-items:start}
 .phone{background:var(--soft);border-radius:24px;padding:16px}
 .phone .bar{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 12px}
-.phone .bar b{font-size:16px}
+.phone .bar b{font-size:17px}
 .po{background:var(--card);border-radius:16px;padding:16px;margin-top:8px}
 .po .r1{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--mut)}
 .po .r2{font-size:15px;font-weight:600;margin-top:4px}
@@ -285,42 +354,101 @@ tr.off td:not(:first-child){opacity:.45}
 .src a{color:var(--brand-text)}
 
 /* 토스트 */
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r-md);font-size:14px;box-shadow:var(--sh-pop);z-index:50;max-width:calc(100% - 32px)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--r-md);font-size:14px;box-shadow:var(--sh-pop);z-index:50;width:max-content;max-width:calc(100% - 32px)}
 .mbar{display:none}
+@media (min-width:721px){
+  /* PC: 첫 화면 버튼이 안 보이면 아래에 떠 있는 실행 막대 */
+  .mbar{display:flex;align-items:center;gap:16px;position:fixed;left:50%;bottom:24px;transform:translate(-50%,24px);opacity:0;pointer-events:none;background:var(--card);padding:8px 8px 8px 24px;border-radius:var(--r-pill);box-shadow:var(--sh-pop);transition:opacity .2s,transform .2s;z-index:40;max-width:calc(100% - 48px)}
+  body.float .mbar{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  .mbar .hint{margin:0;font-size:14px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mbar .btn-w{width:auto;height:44px;border-radius:var(--r-pill);font-size:15px;padding:0 20px}
+  body.float .toast{bottom:96px}
+}
 
 @media (max-width:1100px){
   .grid{grid-template-columns:minmax(0,1fr)}
   .side{position:static;order:-1}
   .pv{grid-template-columns:minmax(0,1fr)}
+  .hero{grid-template-columns:minmax(0,1fr)}
+  .hero .aside{border-left:0;padding-left:0;border-top:1px solid var(--line-2);padding-top:24px;margin-top:24px}
+  .hero .btns{flex-direction:row}
+  .hero .btns .btn{width:auto;flex:1}
 }
 @media (max-width:720px){
   body{font-size:15px}
   .band{font-size:12px;padding:8px 16px;text-align:left}
-  .top .in{height:auto;flex-wrap:wrap;padding:12px 16px;gap:10px}
+  .top{padding:12px 16px 0}
+  .top .in{height:auto;flex-wrap:wrap;padding:12px;gap:12px}
   .brand{width:100%}
+  .brand .crumb{margin-left:auto}
   .seg{margin-left:0;width:100%}
   .seg button{flex:1;padding:0 8px}
-  .wrap{padding:24px 16px calc(120px + env(safe-area-inset-bottom))}
-  .head{display:block;margin-bottom:16px}
-  .head h1{font-size:24px}
+  .wrap{padding:28px 16px calc(132px + env(safe-area-inset-bottom))}
+  .head{display:block;margin-bottom:20px}
+  .head h1{font-size:30px;line-height:1.3}
+  .head p{font-size:15px;margin-top:8px}
   .head .meta{justify-content:flex-start;margin-top:12px}
   .card{padding:20px}
+  .hero{padding:20px;border-radius:var(--r-lg);margin-bottom:12px}
+  .hero .aside{margin-top:20px;padding-top:20px}
+  .hero .why{font-size:14px;margin-bottom:12px}
+  .hero .btns .btn-p{display:none}
+  .hero .btns:not(:has(.btn-s)){display:none}
+  .hero .hh{margin-top:20px}
+  .cmp{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:16px}
+  .cmp .ar{display:none}
+  .cmp .b{padding:16px 0}
+  .cmp .b.tg{padding:16px}
+  .cmp .b.d{grid-column:1/-1;padding:12px 0 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .cmp .b.d .lb{font-size:14px}
+  .cmp .b.d .n{font-size:17px;margin:0;letter-spacing:0}
+  .cmp .b.d .n small{font-size:15px}
+  .cmp .b.d .m{margin:0;font-size:15px;font-weight:700}
+  .cmp .lb{font-size:13px}
+  .cmp .n{font-size:32px;margin-top:8px}
+  .cmp .n small{font-size:17px}
+  .cmp .m{font-size:13px}
+  .meter{margin-top:16px}
+  .meter-l .tot{display:none}
+  .chk4{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px 0;margin-top:20px;padding-top:16px}
+  .chk4 li{padding:0 12px}
+  .chk4 li:nth-child(odd){border-left:0;padding-left:0}
+  .verdict{padding:16px;gap:10px;margin-bottom:16px}
+  .verdict .si{width:24px;height:24px}
+  .verdict b{font-size:17px}
+  .rc thead{display:none}
+  .rc,.rc tbody{display:block}
+  .rc tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:16px 0;border-bottom:1px solid var(--line-2)}
+  .rc tr:last-child{border-bottom:0}
+  .rc td{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:0;border:0}
+  .rc td.k{grid-column:1;display:block}
+  .rc td.st{grid-column:2;grid-row:1;width:auto;padding:0}
+  .rc td.v{grid-column:1/-1;font-size:17px}
+  .rc td.v::before{content:attr(data-l);font-size:13px;font-weight:500;color:var(--mut);letter-spacing:0}
+  .rc td.v .unit{font-size:13px}
+  .rl li{grid-template-columns:20px minmax(0,1fr) auto;gap:2px 10px;padding:12px 0}
+  .rl .si{grid-row:1/3;align-self:start;margin-top:2px}
+  .rl .nt{grid-column:2;grid-row:2}
+  .rl b{grid-column:3;grid-row:1}
+  .flist li{grid-template-columns:minmax(0,1fr);gap:6px}
+  .flist li .pt{justify-content:flex-start;grid-row:2}
+  .flist li .why{grid-row:3}
+  .facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 16px}
+  .facts li{padding:0;border:0}
+  .facts li:nth-child(1),.facts li:nth-child(4){grid-column:1/-1}
   .card h2{font-size:20px}
   .ch{flex-wrap:wrap;margin-bottom:16px}
   .ch .act{margin-left:0;width:100%}
   .ch .act .btn{flex:1}
   .steps{display:none}
-  .big2{grid-template-columns:1fr}
-  .small4{grid-template-columns:1fr 1fr}
-  .mt .vv{font-size:24px}
   .res .vv{font-size:32px}
-  .mt .vv{font-size:24px}
   .rep{padding:16px}
   .rep dl{grid-template-columns:1fr;gap:2px}
   .rep dd{margin-bottom:10px}
   .bk{grid-template-columns:1fr}
   .rb li{grid-template-columns:1fr;gap:4px}
   .side .res .btns .btn-p{display:none}
+  .side .res .kv{margin-bottom:0}
   .side .res .btns:not(:has(.btn-s)){display:none}
   .tbl.cards .l1,.tbl.cards .l2{display:inline}
   .tbl.cards td .l2{margin-left:6px}
@@ -330,8 +458,18 @@ tr.off td:not(:first-child){opacity:.45}
   .tbl.cards thead{display:none}
   .tbl.cards, .tbl.cards tbody, .tbl.cards tr, .tbl.cards td{display:block;width:100%}
   .tbl.cards tr{background:var(--soft);border-radius:16px;padding:12px 16px;margin-bottom:8px}
-  .tbl.cards tr.held{background:#FFF3F3}
-  .tbl.cards tr.held td{background:transparent}
+  /* 변환 미리보기 카드: 번호·날짜 / 주문자 / 상품 / 금액·단계 / 결과 */
+  #prev-tbl.cards tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:16px}
+  #prev-tbl.cards td{display:block;text-align:left;padding:0;font-size:14px}
+  #prev-tbl.cards td::before{display:none}
+  #prev-tbl.cards td.lead{grid-column:1/-1;padding-bottom:4px;font-size:15px}
+  #prev-tbl.cards td.lead .l2{font-weight:400}
+  #prev-tbl.cards td[data-l="주문자"],#prev-tbl.cards td[data-l="상품"]{grid-column:1/-1}
+  #prev-tbl.cards td[data-l="결제금액"]{grid-column:1;font-weight:700;font-size:15px}
+  #prev-tbl.cards td[data-l="결제금액"] .l2{font-weight:500}
+  #prev-tbl.cards td[data-l="단계"]{grid-column:2;text-align:right}
+  #prev-tbl.cards td[data-l="결과"]{grid-column:1/-1;display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:4px 8px;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+  #prev-tbl.cards td[data-l="결과"] .l2{margin:0}
   .tbl.cards td{border:0;padding:3px 0;display:flex;justify-content:space-between;gap:12px;text-align:right}
   .tbl.cards td::before{content:attr(data-l);color:var(--mut);font-size:13px;text-align:left;flex-shrink:0}
   .tbl.cards td.r{text-align:right}
@@ -367,7 +505,7 @@ tr.off td:not(:first-child){opacity:.45}
 }
 @media (pointer:coarse){ .fchip,.stbtn{min-height:44px} select.sel{height:44px} .seg button{height:44px} }
 @media print{
-  .band,.top,.steps,.side,.mbar,.toast,#tab-patch,.no-print{display:none !important}
+  .band,.top,.steps,.side,.hero,.mbar,.toast,#tab-patch,.no-print{display:none !important}
   body{background:#fff}
   .wrap{padding:0}
   .grid{display:block}
@@ -381,7 +519,7 @@ tr.off td:not(:first-child){opacity:.45}
 
 <header class="top">
   <div class="in">
-    <div class="brand"><b>쇼핑몰 이전 작업실</b><span>킴스몰 → 퍼스트몰 독립형</span></div>
+    <div class="brand"><span class="logo" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5h10.5L11 4M15 11.5H4.5L7 14"/></svg></span><b>쇼핑몰 이전 작업실</b><span class="crumb">킴스몰<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5"/></svg><span class="sr">에서 </span>퍼스트몰 독립형</span></div>
     <nav class="seg" role="tablist" aria-label="화면 고르기">
       <button role="tab" id="t-mig" aria-controls="tab-mig" aria-selected="true" data-tab="mig">주문 이관 리허설</button>
       <button role="tab" id="t-patch" aria-controls="tab-patch" aria-selected="false" data-tab="patch" tabindex="-1">패치 반영 기록</button>
@@ -394,10 +532,12 @@ tr.off td:not(:first-child){opacity:.45}
 <section id="tab-mig" role="tabpanel" aria-labelledby="t-mig">
   <div class="head">
     <div>
-      <h1>주문 DB 이관 리허설</h1>
-      <p>퍼스트몰 공식 이전에서 빠지는 옛 주문을 퍼스트몰 구조로 바꿔 보고, 건수와 금액이 원 단위까지 맞는지 확인해요. 실제 이전 전에 두 번 이상 돌려요.</p>
+      <h1>옛 주문 <span id="h-n">241</span>건, 빠짐없이 퍼스트몰로</h1>
+      <p>주문 DB 이관 리허설이에요. 퍼스트몰 공식 이전에서 빠지는 옛 주문을 퍼스트몰 구조로 바꿔 보고, 건수와 금액이 원 단위까지 맞는지 확인해요. 실제 이전 전에 두 번 이상 돌려요.</p>
     </div>
   </div>
+
+  <section class="card hero" id="res" aria-label="리허설 결과와 실행"></section>
 
   <ul class="steps" id="mig-steps" aria-label="진행 단계">
     <li><a href="#c-src" data-k="src"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>옛 주문 파일</a></li>
@@ -407,8 +547,7 @@ tr.off td:not(:first-child){opacity:.45}
     <li><a href="#c-report" data-k="report"><span class="d"><svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#fff" stroke-width="2" fill="none"/></svg></span>리허설 보고서</a></li>
   </ul>
 
-  <div class="grid">
-    <div class="col">
+  <div class="col">
       <!-- 옛 주문 파일 -->
       <article class="card" id="c-src">
         <div class="ch"><div class="tt"><h2>옛 주문 파일</h2><p class="sub">킴스몰 주문을 내려받은 CSV라고 가정했어요. 칸 이름은 예시예요(실제 구조는 DB를 받은 뒤 확인).</p></div></div>
@@ -421,7 +560,7 @@ tr.off td:not(:first-child){opacity:.45}
       <article class="card" id="c-map">
         <div class="ch"><div class="tt"><h2>칸 맞추기</h2><p class="sub">옛 칸을 퍼스트몰 주문 항목에 하나씩 연결해요. DB 칸 이름은 공개 자료에 없어서 전부 예시예요.</p></div></div>
         <table class="tbl cards" id="map-tbl">
-          <thead><tr><th>옛 칸</th><th>퍼스트몰 쪽 항목</th><th>DB 칸</th><th>바꾸는 방법</th></tr></thead>
+          <thead><tr><th>옛 칸</th><th>퍼스트몰 쪽 항목</th><th>DB 칸 <span class="tag-ex">예시</span></th><th>바꾸는 방법</th></tr></thead>
           <tbody></tbody>
         </table>
 
@@ -454,8 +593,9 @@ tr.off td:not(:first-child){opacity:.45}
       <!-- 검증 -->
       <article class="card" id="c-check">
         <div class="ch"><div class="tt"><h2>정합성 검증</h2><p class="sub" id="check-sub"></p></div></div>
-        <div class="big2" id="check-big"></div>
-        <div class="small4" id="check-small"></div>
+        <div id="check-big"></div>
+        <h3 class="subh">줄 단위 확인 <span class="mut">회원·상품·단계·중복을 한 줄씩 맞춰 봐요</span></h3>
+        <div id="check-small"></div>
         <h3 class="subh">중복 줄 <span class="mut">완전히 같은 줄이 두 번 나온 경우</span></h3>
         <table class="tbl cards" id="dup-tbl">
           <thead><tr><th>옛 주문번호</th><th>상품</th><th class="r">수량</th><th class="r">금액</th><th>처리</th></tr></thead>
@@ -491,15 +631,6 @@ tr.off td:not(:first-child){opacity:.45}
           </div>
         </div>
       </article>
-    </div>
-
-    <aside class="side" aria-label="리허설 실행과 기록">
-      <div class="card res" id="res"></div>
-      <div class="card">
-        <h2 style="font-size:17px;margin-bottom:12px">리허설 기록</h2>
-        <ul class="hist" id="hist"></ul>
-      </div>
-    </aside>
   </div>
 </section>
 
@@ -507,8 +638,8 @@ tr.off td:not(:first-child){opacity:.45}
 <section id="tab-patch" role="tabpanel" aria-labelledby="t-patch" hidden>
   <div class="head">
     <div>
-      <h1>패치 반영 기록</h1>
-      <p>커스텀한 독립형 쇼핑몰에 쌓인 공식 패치를 한 회차로 반영하는 순서예요. 덮어쓰기 전에 우리 파일과 겹치는 곳을 먼저 찾고, 시험 서버에서 결제까지 확인한 뒤 본 서버에 올려요.</p>
+      <h1>패치는 반영하고, 커스텀은 그대로</h1>
+      <p>패치 반영 기록이에요. 커스텀한 독립형 쇼핑몰에 쌓인 공식 패치를 한 회차로 반영하는 순서예요. 덮어쓰기 전에 우리 파일과 겹치는 곳을 먼저 찾고, 시험 서버에서 결제까지 확인한 뒤 본 서버에 올려요.</p>
     </div>
   </div>
 
@@ -602,6 +733,15 @@ let toastT;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const CHECK_SVG = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"/></svg>';
+/* 선 아이콘 한 세트 (1.8px) */
+const SV = (cls, d, vb = 20) => `<svg class="${cls}" viewBox="0 0 ${vb} ${vb}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICON = {
+  ok: c => SV('si ok ' + (c || ''), '<circle cx="10" cy="10" r="8"/><path d="M6.6 10.2l2.3 2.3 4.6-4.8"/>'),
+  bad: c => SV('si bad ' + (c || ''), '<circle cx="10" cy="10" r="8"/><path d="M10 6v4.6M10 13.6v.1"/>'),
+  db: SV('ico', '<ellipse cx="8" cy="3.8" rx="5" ry="1.8"/><path d="M3 3.8v8.4c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V3.8M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8"/>', 16),
+  shop: SV('ico', '<path d="M2.5 6.2L3.6 2.5h8.8l1.1 3.7M2.5 6.2h11v7.3h-11zM6.3 13.5V10h3.4v3.5"/>', 16),
+  flow: SV('', '<path d="M4 12h15M14 7l5 5-5 5"/>', 24)
+};
 
 /* ---------- 가상 데이터 만들기 ---------- */
 const R = mulberry32(20261022);
@@ -760,6 +900,7 @@ function rehearse(){
 /* ---------- 탭 1 그리기 ---------- */
 function drawSrc(){
   const first = ORDERS[0].dt.slice(0, 10), lastD = ORDERS[ORDERS.length - 1].dt.slice(0, 10);
+  $('#h-n').textContent = ORDERS.length;
   $('#src-facts').innerHTML = `<li>파일<b class="mono" style="font-weight:500">kims_order_export.csv</b></li><li>줄<b>${ROWS.length.toLocaleString()}</b></li><li>주문<b>${ORDERS.length.toLocaleString()}건</b></li><li>기간<b>${first} ~ ${lastD}</b></li><li>회원 주문<b>${ORDERS.filter(o=>o.mid).length}건</b></li>`;
   const show = ROWS.slice(0, 7).map(r => esc(r.raw)).join('\n');
   $('#src-raw').innerHTML = `<span class="hd">${HEAD.join(',')}</span>\n${show}\n<span style="color:var(--mut)">… ${ROWS.length - 7}줄 더</span>`;
@@ -780,7 +921,7 @@ const MAP_ROWS = [
   ['송장번호','송장번호 (보관)','old_invoice','출고 기록은 새로 만들지 않고 보관 칸에']
 ];
 function drawMap(){
-  $('#map-tbl tbody').innerHTML = MAP_ROWS.map(r => `<tr><td class="lead" data-l="옛 칸"><span>${r[0]}<span class="mob-only"><span class="arrow">→</span>${r[1]}</span></span></td><td class="hide-m" data-l="퍼스트몰">${r[1]}</td><td class="full" data-l="DB 칸"><span class="mob-only mut">DB </span><span class="mono">${r[2]}</span> <span class="tag-ex">예시</span></td><td class="s full" data-l="방법">${r[3]}</td></tr>`).join('');
+  $('#map-tbl tbody').innerHTML = MAP_ROWS.map(r => `<tr><td class="lead" data-l="옛 칸"><span>${r[0]}<span class="mob-only"><span class="arrow">→</span>${r[1]}</span></span></td><td class="hide-m" data-l="퍼스트몰">${r[1]}</td><td class="full" data-l="DB 칸"><span class="mob-only"><span class="tag-ex">DB 칸 예시</span> </span><span class="mono">${r[2]}</span></td><td class="s full" data-l="방법">${r[3]}</td></tr>`).join('');
   const cnt = {}; ORDERS.forEach(o => cnt[o.status] = (cnt[o.status] || 0) + 1);
   $('#st-tbl tbody').innerHTML = OLD_STATUSES.filter(s => cnt[s]).map(s => {
     const v = cfg.map[s] || '';
@@ -801,22 +942,36 @@ function drawRes(){
   const big = L.pass ? '통과' : `보류 ${L.held}건`;
   const why = L.pass ? '주문 수와 결제금액 합계가 원본과 원 단위까지 같아요.' : (L.held ? '아래 규칙을 정하고 다시 돌리면 돼요.' : '금액 차이가 남아 있어요. 중복 줄을 확인해요.');
   const sumD = L.movedSum - L.srcSum;
+  const dN = L.movedOrders - L.srcOrders;
+  const pct = L.movedOrders / L.srcOrders * 100;
+  const ck = (k, v, bad) => `<li>${bad ? ICON.bad() : ICON.ok()}<span><span class="k">${k}</span><b>${v}</b></span></li>`;
   $('#res').innerHTML = `
-    ${dirty ? '<p class="dirty">규칙을 바꿨어요. 다시 실행하면 반영돼요.</p>' : ''}
-    <div class="lb">리허설 ${L.n}차 결과</div>
-    <div class="vv ${L.pass ? 'ok' : 'bad'}">${big}</div>
-    <p class="why">${why}</p>
-    <ul class="kv">
-      <li><span>주문 수</span><b class="${L.movedOrders === L.srcOrders ? 'ok' : 'bad'}">${L.movedOrders} / ${L.srcOrders}건</b></li>
-      <li><span>결제금액 차이</span><b class="${sumD === 0 ? 'ok' : 'bad'}">${sumD === 0 ? '0원' : won(sumD) + '원'}</b></li>
-      <li><span>회원 연결 실패</span><b class="${L.memFail ? 'bad' : ''}">${L.memFail}건</b></li>
-      <li><span>상품 연결 실패</span><b class="${L.goodsFail ? 'bad' : ''}">${L.goodsFail}줄</b></li>
-      <li><span>단계 못 정한 주문</span><b class="${L.stFail ? 'bad' : ''}">${L.stFail}건</b></li>
-      <li><span>중복 줄</span><b class="${L.dup && !L.cfg.dedupe ? 'bad' : ''}">${L.dup}줄${L.cfg.dedupe ? ' (뺌)' : ''}</b></li>
-    </ul>
-    <div class="btns">
-      <button class="btn btn-p" type="button" data-run>리허설 ${runs.length + 1}차 실행</button>
-      ${!L.pass && !allRecOn() ? '<button class="btn btn-s" type="button" data-rec>추천 규칙 모두 켜기</button>' : ''}
+    <div class="main">
+      <div class="top2"><span>리허설 ${L.n}차 결과 <span class="t">· ${hm(L.at)}</span></span><span class="chip ${L.pass ? 'ok' : 'bad'}">${big}</span></div>
+      <div class="cmp">
+        <div class="b"><div class="lb">${ICON.db}킴스몰 원본</div><div class="n">${L.srcOrders.toLocaleString()}<small>건</small></div><div class="m">${won(L.srcSum)}원</div></div>
+        <div class="ar">${ICON.flow}</div>
+        <div class="b tg"><div class="lb">${ICON.shop}퍼스트몰로 옮김</div><div class="n">${L.movedOrders.toLocaleString()}<small>건</small></div><div class="m">${won(L.movedSum)}원</div></div>
+        <div class="b d"><div class="lb">차이</div><div class="n ${dN === 0 ? 'ok' : 'bad'}">${dN === 0 ? '0' : won(dN)}<small>건</small></div><div class="m ${sumD === 0 ? 'ok' : 'bad'}">${sumD === 0 ? '0원' : won(sumD) + '원'}</div></div>
+      </div>
+      <div class="meter" role="img" aria-label="주문 ${L.srcOrders}건 중 ${L.movedOrders}건 옮김${L.held ? `, 보류 ${L.held}건` : ''}"><i style="width:${pct}%"></i>${L.held ? `<i class="h" style="width:${100 - pct}%"></i>` : ''}</div>
+      <div class="meter-l"><span>옮김 ${L.movedOrders} / ${L.srcOrders}건</span>${L.held ? `<span class="hd">보류 ${L.held}건</span>` : ''}<span class="tot">원본 ${ROWS.length}줄 기준</span></div>
+      <ul class="chk4" aria-label="줄 단위 확인">
+        ${ck('회원 연결 실패', L.memFail + '건', L.memFail > 0)}
+        ${ck('상품 연결 실패', L.goodsFail + '줄', L.goodsFail > 0)}
+        ${ck('단계 못 정한 주문', L.stFail + '건', L.stFail > 0)}
+        ${ck('중복 줄', L.dup + '줄' + (L.cfg.dedupe ? ' (뺌)' : ''), L.dup > 0 && !L.cfg.dedupe)}
+      </ul>
+    </div>
+    <div class="aside">
+      ${dirty ? '<p class="dirty">규칙을 바꿨어요. 다시 실행하면 반영돼요.</p>' : ''}
+      <p class="why">${why}</p>
+      <div class="btns">
+        ${!L.pass && !allRecOn() ? '<button class="btn btn-p" type="button" data-rec>추천 규칙 모두 켜기</button>' : ''}
+        <button class="btn ${!L.pass && !allRecOn() ? 'btn-s' : 'btn-p'}" type="button" data-run>리허설 ${runs.length + 1}차 실행</button>
+      </div>
+      <h3 class="hh">리허설 기록</h3>
+      <ul class="hist" id="hist"></ul>
     </div>`;
   $('#hist').innerHTML = runs.slice().reverse().map(r => `<li><span class="n">${r.n}차</span><span class="t">${hm(r.at)} · 옮김 ${r.movedOrders}건</span>${r.pass ? '<span class="chip ok">통과</span>' : `<span class="chip bad">보류 ${r.held}</span>`}</li>`).join('') + (runs.length < 3 ? `<li><span class="n mut">${runs.length < 2 ? '2차' : '3차'}</span><span class="t">${runs.length < 2 ? '규칙 정한 뒤' : '최종 이전 직전 복사본으로'}</span><span class="chip neu">예정</span></li>` : '');
   updateMbar();
@@ -864,16 +1019,36 @@ function drawCheck(){
   const sumD = L.movedSum - L.srcSum;
   $('#check-sub').textContent = `리허설 ${L.n}차 · ${hm(L.at)} · 원본 ${ROWS.length}줄, 주문 ${L.srcOrders}건 기준`;
   const okC = '<span class="chip ok">맞음</span>', badC = t => `<span class="chip bad">${t}</span>`;
+  const dN = L.movedOrders - L.srcOrders;
+  const sumNote = L.held ? `보류분 ${won(L.heldSum)}원 빼고 비교해도 ${L.sumDiff === 0 ? '같음' : (L.sumDiff > 0 ? '+' : '') + won(L.sumDiff) + '원 (중복 줄)'}` : (sumD === 0 ? '원 단위까지 같음' : '중복 줄 때문에 늘어남');
   $('#check-big').innerHTML = `
-    <div class="mt"><div class="lb">주문 수 ${L.movedOrders === L.srcOrders ? okC : badC('다름')}</div><div class="vv">${L.movedOrders}<span class="unit">건</span> <span class="mut" style="font-size:16px;font-weight:500">/ 원본 ${L.srcOrders}건</span></div><div class="cmp">${L.held ? `보류 ${L.held}건은 아직 안 옮겼어요` : '빠진 주문 없음'}</div></div>
-    <div class="mt"><div class="lb">결제금액 합계 ${sumD === 0 ? okC : badC((sumD > 0 ? '+' : '') + won(sumD) + '원')}</div><div class="vv">${won(L.movedSum)}<span class="unit">원</span></div><div class="cmp">원본 ${won(L.srcSum)}원${L.held ? ` · 보류분 ${won(L.heldSum)}원 빼고 비교해도 ${L.sumDiff === 0 ? '같음' : (L.sumDiff > 0 ? '+' : '') + won(L.sumDiff) + '원 (중복 줄)'}` : ''}</div></div>`;
+    <div class="verdict ${L.pass ? 'ok' : ''}">${L.pass ? ICON.ok() : ICON.bad()}<div>
+      <b>${L.pass ? `옛 주문 ${L.srcOrders}건을 모두 옮겼어요` : (L.held ? `보류 ${L.held}건은 아직 안 옮겼어요` : '금액 차이가 남아 있어요')}</b>
+      <span>${L.pass ? '주문 수와 결제금액 합계가 원본과 원 단위까지 같아요.' : (L.held ? '보완 규칙을 켜고 다시 돌려요.' : '중복 줄을 확인해요.')}</span></div></div>
+    <h3 class="subh" style="margin-top:0">합계 대조</h3>
+    <table class="rc">
+      <colgroup><col style="width:30%"><col style="width:22%"><col style="width:22%"><col style="width:16%"><col></colgroup>
+      <thead><tr><th>항목</th><th class="r">킴스몰 원본</th><th class="r">퍼스트몰</th><th class="r">차이</th><th>결과</th></tr></thead>
+      <tbody>
+        <tr><td class="k"><b>주문 수</b><span>${L.held ? `보류 ${L.held}건은 아직 안 옮겼어요` : '빠진 주문 없음'}</span></td>
+          <td class="r v" data-l="킴스몰 원본"><span>${L.srcOrders}<span class="unit">건</span></span></td>
+          <td class="r v" data-l="퍼스트몰"><span>${L.movedOrders}<span class="unit">건</span></span></td>
+          <td class="r v ${dN === 0 ? 'ok' : 'bad'}" data-l="차이"><span>${dN === 0 ? '0' : won(dN)}<span class="unit">건</span></span></td>
+          <td class="st">${dN === 0 ? okC : badC('다름')}</td></tr>
+        <tr><td class="k"><b>결제금액 합계</b><span>${sumNote}</span></td>
+          <td class="r v" data-l="킴스몰 원본"><span>${won(L.srcSum)}<span class="unit">원</span></span></td>
+          <td class="r v" data-l="퍼스트몰"><span>${won(L.movedSum)}<span class="unit">원</span></span></td>
+          <td class="r v ${sumD === 0 ? 'ok' : 'bad'}" data-l="차이"><span>${sumD === 0 ? '0' : (sumD > 0 ? '+' : '') + won(sumD)}<span class="unit">원</span></span></td>
+          <td class="st">${sumD === 0 ? okC : badC('다름')}</td></tr>
+      </tbody>
+    </table>`;
   const tiles = [
     ['회원 연결 실패', L.memFail + '건', L.memWd ? `탈퇴 ${L.memWd}건 비회원으로` : `회원 주문 ${L.memberOrders}건 중`, L.memFail > 0],
     ['상품 연결 실패', L.goodsFail + '줄', L.goodsKeep ? `단종 ${L.goodsKeep}줄 글자 보존` : `상품 줄 ${L.totalLines}개 중`, L.goodsFail > 0],
     ['단계 못 정함', L.stFail + '건', `옛 상태 ${Object.keys(L.stCount).length}종류`, L.stFail > 0],
     ['중복 줄', L.dup + '줄', L.cfg.dedupe ? '하나만 남김' : '그대로 옮기면 금액이 늘어요', L.dup > 0 && !L.cfg.dedupe]
   ];
-  $('#check-small').innerHTML = tiles.map(t => `<div class="ms ${t[3] ? 'bad' : ''}"><div class="lb">${t[0]}</div><div class="vv">${t[1]}</div><div class="cmp">${t[2]}</div></div>`).join('');
+  $('#check-small').innerHTML = '<ul class="rl">' + tiles.map(t => `<li class="${t[3] ? 'bad' : 'ok'}">${t[3] ? ICON.bad() : ICON.ok()}<span class="k">${t[0]}</span><b>${t[1]}</b><span class="nt">${t[2]}</span></li>`).join('') + '</ul>';
   $('#dup-tbl tbody').innerHTML = L.dupRows.map(r => `<tr><td class="lead" data-l="옛 주문번호"><span class="mono">${r.no}</span></td><td data-l="상품">${esc(r.line.name)}</td><td class="r" data-l="수량">${r.line.qty}</td><td class="r" data-l="금액">${won(r.line.price * r.line.qty)}<span class="unit">원</span></td><td data-l="처리">${L.cfg.dedupe ? '<span class="chip ok">뺌</span>' : '<span class="chip bad">두 번 들어감</span>'}</td></tr>`).join('');
 }
 function drawReport(){
@@ -923,9 +1098,9 @@ function doRun(btn){
   bs.forEach(b => { b.classList.add('loading'); b.dataset.t = b.textContent; b.textContent = '리허설 중'; });
   setTimeout(() => {
     last = rehearse(); runs.push(last); dirty = false; prevLimit = 10; prevFilter = last.pass ? 'all' : 'focus';
+    $('#mbar-btn').classList.remove('loading');
     drawAll();
     toast(last.pass ? `리허설 ${last.n}차 통과 · 금액 차이 0원` : `리허설 ${last.n}차 끝 · 보류 ${last.held}건`);
-    $('#mbar-btn').classList.remove('loading');
   }, 700);
 }
 
@@ -1141,8 +1316,12 @@ function setTab(k){
   $('#tab-mig').hidden = k !== 'mig'; $('#tab-patch').hidden = k !== 'patch';
   try { history.replaceState(null, '', k === 'patch' ? '#patch' : '#'); } catch (_) {}
   window.scrollTo(0, 0);
-  updateMbar();
+  updateMbar(); syncFloat();
 }
+/* PC: 첫 화면 결과 카드가 화면 밖으로 나가면 아래에 실행 막대를 띄워요 */
+let heroOut = false;
+function syncFloat(){ document.body.classList.toggle('float', tab === 'mig' && heroOut); }
+if ('IntersectionObserver' in window){ new IntersectionObserver(es => { heroOut = !es[0].isIntersecting; syncFloat(); }, { rootMargin: '-80px 0px 0px 0px' }).observe($('#res')); }
 function dlCsv(){
   const L = last;
   const head = ['옛주문번호','퍼스트몰번호(예시)','주문일','회원연결','원본결제금액','다시계산금액','차이','옛상태','퍼스트몰단계','결과','사유'];
